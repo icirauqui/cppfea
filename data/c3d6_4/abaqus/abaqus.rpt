@@ -1,0 +1,36 @@
+********************************************************************************
+Field Output Report, written Wed Feb 21 08:32:38 2024
+
+Source 1
+---------
+
+   ODB: C:/abaqusTemp/Job-1.odb
+   Step: Step-1
+   Frame: Increment      1: Step Time =    1.000
+
+Loc 1 : Nodal values from source 1
+
+Output sorted by column "Node Label".
+
+Field Output reported at nodes for part: PART-1-1
+
+      Node Label     U.Magnitude            U.U1            U.U2            U.U3
+                          @Loc 1          @Loc 1          @Loc 1          @Loc 1
+---------------------------------------------------------------------------------
+               1              0.    -4.12844E-36             -0.     1.00000E-36
+               2              0.     4.12844E-36     4.12844E-36     1.00000E-36
+               3              0.              0.    -4.12844E-36     1.00000E-36
+               4     608.877E-06     98.6357E-06     441.675E-06     407.339E-06
+               5     497.843E-06     245.278E-06    -147.516E-06     407.339E-06
+               6     608.877E-06    -343.914E-06    -294.159E-06     407.339E-06
+
+
+  Minimum                     0.    -343.914E-06    -294.159E-06     1.00000E-36
+         At Node               3               6               6               3
+
+  Maximum            608.877E-06     245.278E-06     441.675E-06     407.339E-06
+         At Node               6               5               4               6
+
+           Total     1.71560E-03    -14.5519E-12    -29.1038E-12     1.22202E-03
+
+

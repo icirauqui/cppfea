@@ -1,0 +1,141 @@
+1
+
+   Abaqus Learning Edition 2023                                  Date 19-feb.-2024   Time 08:01:26
+   
+
+
+
+     PROCESSING PART, INSTANCE, AND ASSEMBLY INFORMATION
+   *******************************************************
+
+
+     END PROCESSING PART, INSTANCE, AND ASSEMBLY INFORMATION
+   ***********************************************************
+
+
+
+
+     OPTIONS BEING PROCESSED
+   ***************************
+
+
+  *Heading
+  *Node
+  *Element, type=C3D6
+  *Nset, nset=ASSEMBLY_PART-1-1_SET-1
+  *Elset, elset=ASSEMBLY_PART-1-1_SET-1
+  *Nset, nset=ASSEMBLY_SET-1
+  *Nset, nset=ASSEMBLY_SET-2
+  *Nset, nset=ASSEMBLY_SET-3
+  *Nset, nset=ASSEMBLY_SET-4
+  *Nset, nset=ASSEMBLY_SET-5
+  *Elset, elset=ASSEMBLY_SET-3
+  *Elset, elset=ASSEMBLY__SURF-1_S2
+  *material, name=MATERIAL-1
+  *elastic
+  *solidsection, elset=ASSEMBLY_PART-1-1_SET-1, material=MATERIAL-1
+  *solidsection, elset=ASSEMBLY_PART-1-1_SET-1, material=MATERIAL-1
+  *surface, type=ELEMENT, name=ASSEMBLY_SURF-1
+  *surface, type=ELEMENT, name=ASSEMBLY_SURF-1
+  *boundary
+  *boundary
+  *surface, type=ELEMENT, name=ASSEMBLY_SURF-1
+  *output, field
+  *output, history, variable=PRESELECT
+  *elementoutput, position=NODES, directions=YES
+  *output, field
+  *output, history, variable=PRESELECT
+  *elementoutput, position=NODES, directions=YES
+  *output, field
+  *output, history, variable=PRESELECT
+  *elementoutput, position=NODES, directions=YES
+  *Step, name=Export-matrix
+  *Step, name=Step-1, nlgeom=NO
+  *output, field
+  *output, history, variable=PRESELECT
+  *Step, name=Export-matrix
+  *Step, name=Step-1, nlgeom=NO
+  *Step, name=Export-matrix
+  *matrixgenerate, stiffness, mass
+  *matrixoutput, stiffness, format=LABELS, mass
+  *endstep
+  *Step, name=Step-1, nlgeom=NO
+  *static
+  *output, field
+  *nodeoutput
+  *elementoutput, position=NODES, directions=YES
+  *contactoutput
+  *output, history, variable=PRESELECT
+  *endstep
+
+ ***WARNING: THE REQUEST FOR MISES OUTPUT WILL BE REPLACED BY A REQUEST FOR S 
+             OUTPUT
+
+ ***WARNING: STRAIN OUTPUT REQUEST LE IS NOT VALID FOR SOME ELEMENTS IN THIS 
+             ANALYSIS. THIS REQUEST IS SWITCHED TO THE STRAIN MEASURE, E.
+
+ ***NOTE: OUTPUT REQUEST PE IS NOT AVAILABLE FOR THE MATERIAL FOR ELEMENT TYPE 
+          C3D6
+
+ ***NOTE: OUTPUT REQUEST PEEQ IS NOT AVAILABLE FOR THE MATERIAL FOR ELEMENT 
+          TYPE C3D6
+
+ ***NOTE: OUTPUT REQUEST PEMAG IS NOT AVAILABLE FOR THE MATERIAL FOR ELEMENT 
+          TYPE C3D6
+
+ ***NOTE: OUTPUT REQUEST VE IS NOT AVAILABLE FOR THE MATERIAL FOR ELEMENT TYPE 
+          C3D6
+  *boundary
+  *Step, name=Export-matrix
+  *endstep
+  *Step, name=Step-1, nlgeom=NO
+  *static
+  *cload
+  *endstep
+
+ ***WARNING: IN THIS TYPE OF ANALYSIS ONE WOULD NORMALLY EXPECT THAT A DENSITY 
+             FOR MATERIAL MATERIAL-1 WOULD BE DEFINED.
+
+ ***ERROR: THERE ARE NO SOURCES OF INERTIA IN THIS MODEL. IT IS NECESSARY TO 
+           DEFINE A MATERIAL DENSITY OR LUMPED MASS OR INPUT THE MASS MATRIX 
+           FOR A PART OF THE MODEL USING THE MATRIX INPUT CAPABILITY WHEN 
+           INERTIA TERMS ARE REQUIRED IN THE ANALYSIS.
+ ***NOTE: DUE TO AN INPUT ERROR THE ANALYSIS PRE-PROCESSOR HAS BEEN UNABLE TO 
+          INTERPRET SOME DATA.  SUBSEQUENT ERRORS MAY BE CAUSED BY THIS OMISSION
+
+
+
+                            P R O B L E M   S I Z E
+
+
+          NUMBER OF ELEMENTS IS                                    10
+          NUMBER OF NODES IS                                       24
+          NUMBER OF NODES DEFINED BY THE USER                      24
+          TOTAL NUMBER OF VARIABLES IN THE MODEL                   72
+          (DEGREES OF FREEDOM PLUS MAX NO. OF ANY LAGRANGE MULTIPLIER
+           VARIABLES. INCLUDE *PRINT,SOLVE=YES TO GET THE ACTUAL NUMBER.)
+
+ ***WARNING: AN OUTPUT DATABASE REQUEST THAT REQUIRES THE CALCULATOR HAS BEEN 
+             FOUND.  IF VIEWING THE RESULTS BEFORE THE ANALYSIS IS COMPLETE, 
+             PLEASE RUN THE CALCULATOR MANUALLY USING THE CONVERT=ODB AND 
+             OLDJOB= OPTIONS.
+
+
+
+
+
+          THE PROGRAM HAS DISCOVERED     1 FATAL ERRORS
+
+               ** EXECUTION IS TERMINATED **
+
+
+
+                              END OF USER INPUT PROCESSING
+
+
+
+     JOB TIME SUMMARY
+       USER TIME (SEC)      =      0.0    
+       SYSTEM TIME (SEC)    =      0.0    
+       TOTAL CPU TIME (SEC) =      0.0    
+       WALLCLOCK TIME (SEC) =            0

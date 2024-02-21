@@ -1,0 +1,15 @@
+Analysis initiated from SIMULIA established products
+Abaqus JOB job_c3d6
+Abaqus Learning Edition 2023
+Begin Analysis Input File Processor
+2/19/2024 8:01:25 AM
+Run pre.exe
+2/19/2024 8:01:26 AM
+Abaqus Error: Analysis Input File Processor exited with an error - Please see the 
+job_c3d6.dat file for possible error messages if the file exists.
+Begin SIM Wrap-up
+2/19/2024 8:01:26 AM
+Run SMASimUtility.exe
+2/19/2024 8:01:26 AM
+End SIM Wrap-up
+Abaqus/Analysis exited with errors
