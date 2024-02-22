@@ -61,7 +61,7 @@ Eigen::MatrixXd C3D6::computeStrainDisplacementMatrix(Eigen::MatrixXd &dN, Eigen
     // Compute the derivatives of shape functions w.r.t. global coordinates
     Eigen::MatrixXd dNdXYZ = invJ * dN.transpose();
 
-    std::cout << " dNdXYZ " << std::endl << dNdXYZ << std::endl;
+    //std::cout << " dNdXYZ " << std::endl << dNdXYZ << std::endl;
 
     // Initialize the B matrix
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, 18); // 6 strain components, 18 displacement components (3 per node)

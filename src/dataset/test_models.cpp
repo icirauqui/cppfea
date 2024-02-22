@@ -233,7 +233,7 @@ public:
   }
 
   void read_inp_file(const std::string& inpFileName) {
-    std::cout << "\n** Read input file" << std::endl;
+    std::cout << "\nRead input file" << std::endl;
 
     std::ifstream inpFile(inpFileName);
     if (!inpFile.is_open()) {
@@ -323,9 +323,9 @@ public:
 
     inpFile.close();
 
-    std::cout << "Nodes: " << _nodes.size() << std::endl;
-    std::cout << "Elements: " << _elements.size() << std::endl;
-    std::cout << "Boundary: " << boundary.size() << std::endl;
+    std::cout << " - Nodes: " << _nodes.size() << std::endl;
+    std::cout << " - Elements: " << _elements.size() << std::endl;
+    std::cout << " - Boundary: " << boundary.size() << std::endl;
 
   }
 
@@ -367,7 +367,7 @@ public:
   }
 
   void read_inp_file(const std::string& inpFileName) {
-    std::cout << "\n** Read input file" << std::endl;
+    std::cout << "\nRead input file" << std::endl;
 
     std::ifstream inpFile(inpFileName);
     if (!inpFile.is_open()) {
@@ -405,7 +405,7 @@ public:
 
     inpFile.close();
 
-    std::cout << "Nodes: " << _nodes.size() << std::endl;
+    std::cout << " - Nodes: " << _nodes.size() << std::endl;
 
     std::vector<unsigned int> element1 = {1,3,13,0,2,12};
     std::vector<unsigned int> element2 = {15,13,3,14,12,2};
@@ -423,14 +423,14 @@ public:
 
 
 
-    std::cout << "Elements: " << _elements.size() << std::endl;
-    for (auto elt: _elements) {
-      std::cout << "Element: ";
-      for (auto n: elt) {
-        std::cout << n << " ";
-      }
-      std::cout << std::endl;
-    }
+    std::cout << " - Elements: " << _elements.size() << std::endl;
+    //for (auto elt: _elements) {
+    //  std::cout << "Element: ";
+    //  for (auto n: elt) {
+    //    std::cout << n << " ";
+    //  }
+    //  std::cout << std::endl;
+    //}
   }
 
 
@@ -489,7 +489,7 @@ public:
   }
 
   void read_inp_file(const std::string& inpFileName) {
-    std::cout << "\n** Read input file" << std::endl;
+    std::cout << "\nRead input file" << std::endl;
 
     std::ifstream inpFile(inpFileName);
     if (!inpFile.is_open()) {
@@ -581,9 +581,9 @@ public:
 
     inpFile.close();
 
-    std::cout << "Nodes: " << _nodes.size() << std::endl;
-    std::cout << "Elements: " << _elements.size() << std::endl;
-    //std::cout << "Boundary: " << boundary.size() << std::endl;
+    std::cout << " - Nodes: " << _nodes.size() << std::endl;
+    std::cout << " - Elements: " << _elements.size() << std::endl;
+    //std::cout << " - Boundary: " << boundary.size() << std::endl;
 
   }
 
@@ -630,7 +630,7 @@ public:
   }
 
   void read_inp_file(const std::string& inpFileName) {
-    std::cout << "\n** Read input file" << std::endl;
+    std::cout << "\nRead input file" << std::endl;
 
     std::ifstream inpFile(inpFileName);
     if (!inpFile.is_open()) {
@@ -722,9 +722,9 @@ public:
 
     inpFile.close();
 
-    std::cout << "Nodes: " << _nodes.size() << std::endl;
-    std::cout << "Elements: " << _elements.size() << std::endl;
-    //std::cout << "Boundary: " << boundary.size() << std::endl;
+    std::cout << " - Nodes: " << _nodes.size() << std::endl;
+    std::cout << " - Elements: " << _elements.size() << std::endl;
+    //std::cout << " - Boundary: " << boundary.size() << std::endl;
 
   }
 
@@ -771,7 +771,7 @@ public:
   }
 
   void read_inp_file(const std::string& inpFileName) {
-    std::cout << "\n** Read input file" << std::endl;
+    std::cout << "\nRead input file" << std::endl;
 
     std::ifstream inpFile(inpFileName);
     if (!inpFile.is_open()) {
@@ -863,9 +863,9 @@ public:
 
     inpFile.close();
 
-    std::cout << "Nodes: " << _nodes.size() << std::endl;
-    std::cout << "Elements: " << _elements.size() << std::endl;
-    //std::cout << "Boundary: " << boundary.size() << std::endl;
+    std::cout << " - Nodes: " << _nodes.size() << std::endl;
+    std::cout << " - Elements: " << _elements.size() << std::endl;
+    //std::cout << " - Boundary: " << boundary.size() << std::endl;
 
   }
 
@@ -900,7 +900,7 @@ public:
 
 /*
 Eigen::MatrixXd read_stiffness_matrix_abaqus(std::string inpFileName) {
-    std::cout << "\n** Read input file" << std::endl;
+    std::cout << "\nRead input file" << std::endl;
 
     std::ifstream inpFile(inpFileName);
     if (!inpFile.is_open()) {
@@ -992,9 +992,9 @@ Eigen::MatrixXd read_stiffness_matrix_abaqus(std::string inpFileName) {
 
     inpFile.close();
 
-    std::cout << "Nodes: " << _nodes.size() << std::endl;
-    std::cout << "Elements: " << _elements.size() << std::endl;
-    //std::cout << "Boundary: " << boundary.size() << std::endl;
+    std::cout << " - Nodes: " << _nodes.size() << std::endl;
+    std::cout << " - Elements: " << _elements.size() << std::endl;
+    //std::cout << " - Boundary: " << boundary.size() << std::endl;
 
   }
 }

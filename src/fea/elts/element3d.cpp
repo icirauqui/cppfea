@@ -65,7 +65,7 @@ Eigen::MatrixXd Element3D::computeStiffnessMatrix(const std::vector<Eigen::Vecto
                 auto [invJ, detJ] = computeInverseJacobianAndDet(J);
                 Eigen::MatrixXd B = computeStrainDisplacementMatrix(dN, invJ, detJ);
 
-                std::cout << std::endl << std::endl;
+                //std::cout << std::endl << std::endl;
 
                 // Weight calculation considering different weights
                 double weight = gaussWeights[i] * gaussWeights[j] * gaussWeights[k];

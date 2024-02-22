@@ -19,12 +19,10 @@ FEA::FEA(std::string element_type,
 
   if (debug_mode_) {
     std::cout << std::endl;
-    std::cout << "FEA: " << element_type << std::endl;
-    std::cout << "element pointer address: " << element_ << std::endl;
-    std::cout << "element name: " << element_->getElementName() << std::endl;
-    std::cout << "element dim: " << element_->getNumNodes() << std::endl;
-    std::cout << "element dof: " << element_->getDofPerNode() << std::endl;
-    std::cout << "element D: " << std::endl << element_->getD() << std::endl;
+    std::cout << "Finite Element Analysis: " << element_->getElementName() << std::endl;
+    std::cout << " - Nodes per element: " << element_->getNumNodes() << std::endl;
+    std::cout << " - DOF per node: " << element_->getDofPerNode() << std::endl;
+    //std::cout << " - Material Matrix D: " << std::endl << element_->getD() << std::endl;
   }
 }
 
@@ -69,9 +67,6 @@ void FEA::ApplyBoundaryConditions(BoundaryConditions &bc) {
   int bc_displ = 0;
 
   int num_dof = bc.NumDof();
-
-  std::cout << " K Size = " << K_.rows() << " x " << K_.cols() << std::endl;
-  std::cout << " F Size = " << F_.rows() << " x " << F_.cols() << std::endl;
 
   for (unsigned int node = 0; node < bc.NodeIds().size(); node++) {
 
@@ -139,7 +134,6 @@ void FEA::ApplyLoads(Loads &loads) {
       
       loads_node++;
     }
-    std::cout << std::endl;
   }
 
   std::cout << " - Node loads: " << loads_node << std::endl;
@@ -353,7 +347,7 @@ void FEA::ReportNodes(std::string filename) {
 
   file.close();
 
-  std::cout << "ReportNodes [U,F]: " << filename << std::endl;
+  std::cout << " * ReportNodes [U,F]: " << filename << std::endl;
 }
 
 void FEA::ExportAll(std::string filename) {
@@ -367,7 +361,7 @@ void FEA::ExportAll(std::string filename) {
   file << std::endl << "U ( " << U_.rows() << ", " << U_.cols() << " ) " << std::endl << std::endl;
   file.close();
 
-  std::cout << "ExportAll [K,F,U]: " << filename << std::endl;
+  std::cout << " * ExportAll [K,F,U]: " << filename << std::endl;
 }
 
 void FEA::ExportSystem(std::string filename) {
@@ -394,7 +388,7 @@ void FEA::ExportSystem(std::string filename) {
 
   file.close();
 
-  std::cout << "ExportSystem KU=F: " << filename << std::endl;
+  std::cout << " * ExportSystem KU=F: " << filename << std::endl;
 }
 
 void FEA::ExportK(std::string filename) {
@@ -404,7 +398,7 @@ void FEA::ExportK(std::string filename) {
   file << std::endl << "K ( " << K_.rows() << ", " << K_.cols() << " ) " << std::endl;
   file.close();
 
-  std::cout << "ExportK [K]: " << filename << std::endl;
+  std::cout << " * ExportK [K]: " << filename << std::endl;
 }
 
 void FEA::ExportF(std::string filename) {
@@ -414,7 +408,7 @@ void FEA::ExportF(std::string filename) {
   file << std::endl << "F ( " << F_.rows() << ", " << F_.cols() << " ) " << std::endl;
   file.close();
 
-  std::cout << "ExportF [F]: " << filename << std::endl;
+  std::cout << " * ExportF [F]: " << filename << std::endl;
 }
 
 void FEA::ExportU(std::string filename) {
@@ -424,7 +418,7 @@ void FEA::ExportU(std::string filename) {
   file << std::endl << "U ( " << U_.rows() << ", " << U_.cols() << " ) " << std::endl;
   file.close();
 
-  std::cout << "ExportU [U]: " << filename << std::endl;
+  std::cout << " * ExportU [U]: " << filename << std::endl;
 }
 
 
@@ -530,6 +524,7 @@ void FEA::ReportFEAData(std::string filename) {
   std::cout << std::endl;
   std::cout << " - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
   std::cout << " - ReportFEAData: " << filename << std::endl;
+  std::cout << " - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << std::endl;
   std::cout << " - Element: " << fea_data_->element_name << std::endl;
   std::cout << " - Number of nodes: " << fea_data_->number_of_nodes << std::endl;
   std::cout << " - Number of elements: " << fea_data_->number_of_elements << std::endl;

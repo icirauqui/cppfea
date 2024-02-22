@@ -9,9 +9,7 @@ void test_c3d6_displacements() {
   double nu = 0.3;
 
   AbaqusC3D6_1 model("../data/c3d6_1/a.input");
-  std::cout << "num nodes = " << model._nodes.size() << "\n";
 
-  std::cout << "\nBuild FEA" << std::endl;
   FEA fea("C3D6", E, nu, true);
 
   std::cout << "\nBuild BoundaryConditions" << std::endl;
@@ -39,14 +37,12 @@ void test_c3d6_displacements() {
   fea.PostProcess(model._nodes, model._elements);
   fea.ReportFEAData("../data/" + model.Name() + "/FEAData.csv");
 
-  std::cout << "\nCompute deformed positions" << std::endl;
+  std::cout << "Compute deformed positions" << std::endl;
   Eigen::MatrixXd U = fea.U();
   std::vector<Eigen::Vector3d> u;
   for (unsigned int n=0; n<model._nodes.size(); n++) {
     u.push_back(U.block(n*3, 0, 3, 1));
   }
-  std::cout << " - u.size(): " << u.size() << std::endl;
-  std::cout << " - model._nodes.size(): " << model._nodes.size() << std::endl;
   double scale = 100000000000000.0;
   model.ApplyDisplacements(u, {scale, scale, 1.0});
 
@@ -70,7 +66,6 @@ void test_c3d6_loads() {
 
   AbaqusC3D6_1 model("../data/c3d6_1/a.input");
 
-  std::cout << "\nBuild FEA" << std::endl;
   FEA fea("C3D6", E, nu, true);
 
   std::cout << "\nBuild BoundaryConditions" << std::endl;
@@ -103,14 +98,12 @@ void test_c3d6_loads() {
   fea.PostProcess(model._nodes, model._elements);
   fea.ReportFEAData("../data/" + model.Name() + "/FEAData.csv");
 
-  std::cout << "\nCompute deformed positions" << std::endl;
+  std::cout << "Compute deformed positions" << std::endl;
   Eigen::MatrixXd U = fea.U();
   std::vector<Eigen::Vector3d> u;
   for (unsigned int n=0; n<model._nodes.size(); n++) {
     u.push_back(U.block(n*3, 0, 3, 1));
   }
-  std::cout << " - u.size(): " << u.size() << std::endl;
-  std::cout << " - model._nodes.size(): " << model._nodes.size() << std::endl;
   double scale = 1000.0;
   model.ApplyDisplacements(u, scale);
 
@@ -135,9 +128,7 @@ void test_c3d8_displacements() {
   double nu = 0.3;
 
   AbaqusC3D8_2 model;
-  std::cout << "num nodes = " << model._nodes.size() << "\n";
 
-  std::cout << "\nBuild FEA" << std::endl;
   FEA fea("C3D8", E, nu, true);
 
   std::cout << "\nBuild BoundaryConditions" << std::endl;
@@ -164,14 +155,12 @@ void test_c3d8_displacements() {
   fea.PostProcess(model._nodes, model._elements);
   fea.ReportFEAData("../data/" + model.Name() + "/FEAData.csv");
 
-  std::cout << "\nCompute deformed positions" << std::endl;
+  std::cout << "Compute deformed positions" << std::endl;
   Eigen::MatrixXd U = fea.U();
   std::vector<Eigen::Vector3d> u;
   for (unsigned int n=0; n<model._nodes.size(); n++) {
     u.push_back(U.block(n*3, 0, 3, 1));
   }
-  std::cout << " - u.size(): " << u.size() << std::endl;
-  std::cout << " - model._nodes.size(): " << model._nodes.size() << std::endl;
   double scale = 1.0;
   model.ApplyDisplacements(u, scale);
 
@@ -194,9 +183,7 @@ void test_c3d8_loads() {
   double nu = 0.3;
 
   AbaqusC3D8_2 model;
-  std::cout << "num nodes = " << model._nodes.size() << "\n";
 
-  std::cout << "\nBuild FEA" << std::endl;
   FEA fea("C3D8", E, nu, true);
 
   std::cout << "\nBuild BoundaryConditions" << std::endl;
@@ -228,14 +215,12 @@ void test_c3d8_loads() {
   fea.PostProcess(model._nodes, model._elements);
   fea.ReportFEAData("../data/" + model.Name() + "/FEAData.csv");
 
-  std::cout << "\nCompute deformed positions" << std::endl;
+  std::cout << "Compute deformed positions" << std::endl;
   Eigen::MatrixXd U = fea.U();
   std::vector<Eigen::Vector3d> u;
   for (unsigned int n=0; n<model._nodes.size(); n++) {
     u.push_back(U.block(n*3, 0, 3, 1));
   }
-  std::cout << " - u.size(): " << u.size() << std::endl;
-  std::cout << " - model._nodes.size(): " << model._nodes.size() << std::endl;
   double scale = 100.0;
   model.ApplyDisplacements(u, scale);
 
@@ -259,9 +244,7 @@ void test_c2d4_displacements() {
   double nu = 0.3;
 
   AbaqusC2D4_1 model("../py/tn5.input");
-  std::cout << "num nodes = " << model._nodes.size() << "\n";
 
-  std::cout << "\nBuild FEA" << std::endl;
   FEA fea("C2D4", 100.0, 0.3, true);
 
   std::cout << "\nBuild BoundaryConditions" << std::endl;
@@ -288,14 +271,12 @@ void test_c2d4_displacements() {
   fea.PostProcess(model._nodes, model._elements);
   fea.ReportFEAData("../data/" + model.Name() + "/FEAData.csv");
 
-  std::cout << "\nCompute deformed positions" << std::endl;
+  std::cout << "Compute deformed positions" << std::endl;
   Eigen::MatrixXd U = fea.U();
   std::vector<Eigen::Vector2d> u;
   for (unsigned int n=0; n<model._nodes.size(); n++) {
     u.push_back(U.block(n*2, 0, 2, 1));
   }
-  std::cout << " - u.size(): " << u.size() << std::endl;
-  std::cout << " - model._nodes.size(): " << model._nodes.size() << std::endl;
   double scale = 1.0;
   model.ApplyDisplacements(u, scale);
 
@@ -325,9 +306,7 @@ void test_c2d4_loads() {
   double nu = 0.3;
 
   AbaqusC2D4_1 model("../py/tn5.input");
-  std::cout << "num nodes = " << model._nodes.size() << "\n";
 
-  std::cout << "\nBuild FEA" << std::endl;
   FEA fea("C2D4", 100.0, 0.3, true);
 
   std::cout << "\nBuild BoundaryConditions" << std::endl;
@@ -358,14 +337,12 @@ void test_c2d4_loads() {
   fea.PostProcess(model._nodes, model._elements);
   fea.ReportFEAData("../data/" + model.Name() + "/FEAData.csv");
 
-  std::cout << "\nCompute deformed positions" << std::endl;
+  std::cout << "Compute deformed positions" << std::endl;
   Eigen::MatrixXd U = fea.U();
   std::vector<Eigen::Vector2d> u;
   for (unsigned int n=0; n<model._nodes.size(); n++) {
     u.push_back(U.block(n*2, 0, 2, 1));
   }
-  std::cout << " - u.size(): " << u.size() << std::endl;
-  std::cout << " - model._nodes.size(): " << model._nodes.size() << std::endl;
   double scale = 1.0;
   model.ApplyDisplacements(u, scale);
 
