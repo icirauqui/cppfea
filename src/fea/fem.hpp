@@ -62,14 +62,15 @@ public:
   void ViewMesh(bool extrusion = false,
                 std::vector<Eigen::Vector3d> cloud2 = std::vector<Eigen::Vector3d>(),
                 std::vector<Eigen::Vector3d> cloud2extrusion = std::vector<Eigen::Vector3d>(),
-                std::pair<Eigen::Vector4d, Eigen::Vector3d> pose1 = std::make_pair(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 0.0)),
                 std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2 = std::make_pair(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 0.0)),
                 int wait = 0);
 
   void ViewMesh(bool extrusion = false,
+                int wait = 0);
+                   
+  void ViewMesh(bool extrusion = false,
                 pcl::PointCloud<pcl::PointXYZ> cloud2 = pcl::PointCloud<pcl::PointXYZ>(),
                 std::vector<Eigen::Vector3d> cloud2extrusion = std::vector<Eigen::Vector3d>(),
-                std::pair<Eigen::Vector4d, Eigen::Vector3d> pose1 = std::make_pair(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 0.0)),
                 std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2 = std::make_pair(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 0.0)),
                 int wait = 0);
 
@@ -83,6 +84,7 @@ public:
   void SetElements(std::vector<std::vector<int>> elements);
 
   pcl::PointCloud<pcl::PointXYZ> GetCloud();
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> GetPose();
 
 
 private:
@@ -108,6 +110,8 @@ private:
   pcl::PolygonMesh mesh_;
 
   double element_height_ = 0.0;
+
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_;
 
   // Interface 
   float mls_search_radius_ = 1.0;
