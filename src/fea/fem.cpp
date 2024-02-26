@@ -201,7 +201,7 @@ bool FEM::Triangulate() {
     unsigned int nver2 = mesh_.polygons[i].vertices[2];
 
     if (parts[nver0] == max_key && parts[nver1] == max_key && parts[nver2] == max_key) {
-      std::vector<int> triangle;
+      std::vector<unsigned int> triangle;
       triangle.push_back(nver0);
       triangle.push_back(nver1);
       triangle.push_back(nver2);
@@ -210,6 +210,36 @@ bool FEM::Triangulate() {
   }
   
   return triangles_.size() > 0 ? true : false;
+}
+
+
+int FEM::CheckNodeOrderConsistency() {
+  // Check if the triangles are ordered in a consistent way
+  // If not, reorder them
+  // Correct order is such that the normal of the triangle points outwards
+  // and that the vertices are ordered in a counter-clockwise direction
+  int nodes_reversed = 0;
+  for (unsigned int i=0; i<triangles_.size(); i++) {
+    pcl::PointXYZ p0 = pc_.points[triangles_[i][0]];
+    pcl::PointXYZ p1 = pc_.points[triangles_[i][1]];
+    pcl::PointXYZ p2 = pc_.points[triangles_[i][2]];
+
+    Eigen::Vector3d v0(p0.x, p0.y, p0.z);
+    Eigen::Vector3d v1(p1.x, p1.y, p1.z);
+    Eigen::Vector3d v2(p2.x, p2.y, p2.z);
+
+    Eigen::Vector3d normal = (v1 - v0).cross(v2 - v0);
+    normal.normalize();
+
+    if (normal(2) < 0) {
+      unsigned int temp = triangles_[i][0];
+      triangles_[i][0] = triangles_[i][1];
+      triangles_[i][1] = temp;
+      nodes_reversed++;
+    }
+  }
+
+  return nodes_reversed;
 }
 
 
@@ -227,12 +257,18 @@ bool FEM::Compute(bool moving_least_squares) {
     std::cout << " - Triangulate: " << ok << std::endl;
   }
 
+  if (ok) {
+    int nodes_reversed = CheckNodeOrderConsistency();
+    std::cout << " - CheckNodeOrderConsistency: " << nodes_reversed << " nodes reversed" << std::endl;
+    ok = nodes_reversed != -1;
+  }
+
   return ok;
 }
 
 void FEM::ComputeExtrusion() {
   std::vector<double> distances;
-  for (std::vector<int> triangle : triangles_) {
+  for (std::vector<unsigned int> triangle : triangles_) {
     pcl::PointXYZ p0 = pc_.points[triangle[0]];
     pcl::PointXYZ p1 = pc_.points[triangle[1]];
     pcl::PointXYZ p2 = pc_.points[triangle[2]];
@@ -249,6 +285,7 @@ void FEM::ComputeExtrusion() {
   // Get median
   std::sort(distances.begin(), distances.end());
   element_height_ = distances[distances.size()/2];
+  std::cout << " - Computed element height: mag = " << element_height_ << std::endl;
   
   // Compute second layer at a distance of 1/2 element height and with the direction of the normal vector
   points2_.clear();
@@ -280,8 +317,8 @@ void FEM::ComputeExtrusion() {
     pc2_.points[i].z = point2(2);
   }
 
-  for (std::vector<int> triangle : triangles_) {
-    std::vector<int> element;
+  for (std::vector<unsigned int> triangle : triangles_) {
+    std::vector<unsigned int> element;
     element.push_back(triangle[0] + points_.size());
     element.push_back(triangle[1] + points_.size());
     element.push_back(triangle[2] + points_.size());
@@ -290,31 +327,6 @@ void FEM::ComputeExtrusion() {
     element.push_back(triangle[2]);
     elements_.push_back(element);
   }
-
-  //for (unsigned int i=0; i<points_.size(); i++) {
-  //  std::cout << "Point1 " << i << ": " << points_[i].transpose() << std::endl;
-  //}
-  //for (unsigned int i=0; i<points2_.size(); i++) {
-  //  std::cout << "Point2 " << i << ": " << points2_[i].transpose() << std::endl;
-  //}
-  //std::cout << std::endl;
-
-  //for (unsigned int i=0; i<elements_.size(); i++) {
-  //  std::cout << "Element " <<  i << ": ";
-  //  for (unsigned int j=0; j<elements_[i].size(); j++) {
-  //    std::cout << elements_[i][j] << " ";
-  //  }
-  //  std::cout << std::endl;
-  //  for (unsigned int j=0; j<elements_[i].size(); j++) {
-  //    if (elements_[i][j] >= points_.size()) {
-  //      std::cout << "  " << elements_[i][j] << " : " << points2_[elements_[i][j]-points_.size()].transpose() << std::endl;
-  //    } else {
-  //      std::cout << "  " << elements_[i][j] << " : " << points_[elements_[i][j]].transpose() << std::endl;
-  //    }
-  //  }
-  //  std::cout << std::endl;
-  //  std::cout << std::endl;
-  //}
 }
 
 std::vector<Eigen::Vector3d> FEM::GetExtrusionDelta() {
@@ -623,22 +635,37 @@ std::vector<std::vector<float>> FEM::GetNodes() {
 }
 
 std::vector<Eigen::Vector3d> FEM::GetEigenNodes() {
+  std::vector<Eigen::Vector3d> points;
+  for (Eigen::Vector3d pt: points_) {
+    points.push_back(pt);
+  }
+  for (Eigen::Vector3d pt: points2_) {
+    points.push_back(pt);
+  }
+  return points;
+}
+
+std::vector<Eigen::Vector3d> FEM::GetEigenBaseNodes() {
   return points_;
 }
 
-std::vector<std::vector<int>> FEM::GetTriangles() {
+std::vector<Eigen::Vector3d> FEM::GetEigenExtrudedNodes() {
+  return points2_;
+}
+
+std::vector<std::vector<unsigned int>> FEM::GetTriangles() {
   return triangles_;
 }
 
-void FEM::SetTriangles(std::vector<std::vector<int>> triangles) {
+void FEM::SetTriangles(std::vector<std::vector<unsigned int>> triangles) {
   triangles_ = triangles;
 }
 
-std::vector<std::vector<int>> FEM::GetElements() {
+std::vector<std::vector<unsigned int>> FEM::GetElements() {
   return elements_;
 }
 
-void FEM::SetElements(std::vector<std::vector<int>> elements) {
+void FEM::SetElements(std::vector<std::vector<unsigned int>> elements) {
   elements_ = elements;
 }
 

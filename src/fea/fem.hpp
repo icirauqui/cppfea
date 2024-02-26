@@ -50,6 +50,8 @@ public:
   bool MovingLeastSquares();
   
   bool Triangulate();
+  
+  int CheckNodeOrderConsistency();
 
   bool Compute(bool moving_least_squares = true);
 
@@ -76,12 +78,14 @@ public:
 
   std::vector<std::vector<float>> GetNodes();
   std::vector<Eigen::Vector3d> GetEigenNodes();
+  std::vector<Eigen::Vector3d> GetEigenBaseNodes();
+  std::vector<Eigen::Vector3d> GetEigenExtrudedNodes();
 
-  std::vector<std::vector<int>> GetTriangles();
-  void SetTriangles(std::vector<std::vector<int>> triangles);
+  std::vector<std::vector<unsigned int>> GetTriangles();
+  void SetTriangles(std::vector<std::vector<unsigned int>> triangles);
 
-  std::vector<std::vector<int>> GetElements();
-  void SetElements(std::vector<std::vector<int>> elements);
+  std::vector<std::vector<unsigned int>> GetElements();
+  void SetElements(std::vector<std::vector<unsigned int>> elements);
 
   pcl::PointCloud<pcl::PointXYZ> GetCloud();
   std::pair<Eigen::Vector4d, Eigen::Vector3d> GetPose();
@@ -101,7 +105,7 @@ private:
 
   pcl::PointCloud<pcl::PointXYZ> pc_, pc2_;
 
-  std::vector<std::vector<int>> triangles_, elements_;
+  std::vector<std::vector<unsigned int>> triangles_, elements_;
 
   std::vector<int> mls_indices_;
 
