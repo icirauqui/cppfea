@@ -6,6 +6,7 @@
 #include <vector>
 #include <math.h>
 #include <fstream>
+#include <unordered_map>
 
 #include <eigen3/Eigen/Dense>
 
@@ -50,6 +51,12 @@ public:
   bool MovingLeastSquares();
   
   bool Triangulate();
+
+  Eigen::Vector3d calculateMidpoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2);
+
+  Eigen::Vector3d calculateOrthocenter(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, const Eigen::Vector3d& p3);
+
+  bool TransformIntoQuads();
   
   int CheckNodeOrderConsistency();
 
@@ -69,6 +76,9 @@ public:
                 int wait = 0);
 
   void ViewMesh(bool extrusion = false,
+                int wait = 0);
+
+  void ViewMeshQuads(bool extrusion = false,
                 int wait = 0);
                    
   void ViewMesh(bool extrusion = false,
@@ -106,7 +116,9 @@ private:
 
   pcl::PointCloud<pcl::PointXYZ> pc_, pc2_;
 
-  std::vector<std::vector<unsigned int>> triangles_, elements_;
+  std::vector<std::vector<unsigned int>> triangles_, elements_, quadrilaterals_;
+
+  bool transform_into_quads_ = false;
 
   std::vector<int> mls_indices_;
 

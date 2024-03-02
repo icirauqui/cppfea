@@ -213,31 +213,128 @@ bool FEM::Triangulate() {
 }
 
 
+
+Eigen::Vector3d FEM::calculateMidpoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2) {
+    return (p1 + p2) / 2.0;
+}
+
+Eigen::Vector3d FEM::calculateOrthocenter(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, const Eigen::Vector3d& p3) {
+    return (p1 + p2 + p3) / 3.0;
+}
+
+bool FEM::TransformIntoQuads() {
+
+    std::unordered_map<std::string, unsigned int> edgeMidpointIndexMap;
+    
+    for (const auto& triangle : triangles_) {
+        std::vector<unsigned int> quadPoints;
+        std::vector<unsigned int> midPointsIndices(3);
+
+        // Calculate midpoints for each side and the orthocenter.
+        for (int i = 0; i < 3; ++i) {
+            unsigned int startIdx = triangle[i];
+            unsigned int endIdx = triangle[(i + 1) % 3];
+            std::string edgeKey = std::to_string(std::min(startIdx, endIdx)) + "-" + std::to_string(std::max(startIdx, endIdx));
+            
+            if (edgeMidpointIndexMap.find(edgeKey) == edgeMidpointIndexMap.end()) {
+                Eigen::Vector3d midpoint = calculateMidpoint(points_[startIdx], points_[endIdx]);
+                points_.push_back(midpoint);
+                unsigned int newPointIndex = points_.size() - 1;
+                edgeMidpointIndexMap[edgeKey] = newPointIndex;
+                midPointsIndices[i] = newPointIndex;
+            } else {
+                midPointsIndices[i] = edgeMidpointIndexMap[edgeKey];
+            }
+        }
+
+        Eigen::Vector3d orthocenter = calculateOrthocenter(points_[triangle[0]], points_[triangle[1]], points_[triangle[2]]);
+        points_.push_back(orthocenter);
+        unsigned int orthocenterIndex = points_.size() - 1;
+
+        // For each side of the triangle, form a quadrilateral using one original vertex, two midpoints, and the orthocenter.
+        for (int i = 0; i < 3; ++i) {
+            std::vector<unsigned int> quadrilateral = {
+                triangle[i],
+                midPointsIndices[i],
+                orthocenterIndex,
+                midPointsIndices[(i + 2) % 3] // Use the previous side's midpoint by cycling backwards.
+            };
+            quadrilaterals_.push_back(quadrilateral);
+        }
+    }
+
+  std::cout << " Number of Triangles: " << triangles_.size() << std::endl;
+  std::cout << " Number of Quadrilaterals: " << quadrilaterals_.size() << std::endl;
+
+  return true;
+}
+
+
+
+
+
+
 int FEM::CheckNodeOrderConsistency() {
   // Check if the triangles are ordered in a consistent way
   // If not, reorder them
   // Correct order is such that the normal of the triangle points outwards
   // and that the vertices are ordered in a counter-clockwise direction
   int nodes_reversed = 0;
-  for (unsigned int i=0; i<triangles_.size(); i++) {
-    pcl::PointXYZ p0 = pc_.points[triangles_[i][0]];
-    pcl::PointXYZ p1 = pc_.points[triangles_[i][1]];
-    pcl::PointXYZ p2 = pc_.points[triangles_[i][2]];
 
-    Eigen::Vector3d v0(p0.x, p0.y, p0.z);
-    Eigen::Vector3d v1(p1.x, p1.y, p1.z);
-    Eigen::Vector3d v2(p2.x, p2.y, p2.z);
 
-    Eigen::Vector3d normal = (v1 - v0).cross(v2 - v0);
-    normal.normalize();
+  if (transform_into_quads_) {
+    for (unsigned int i=0; i<quadrilaterals_.size(); i++) {
+      pcl::PointXYZ p0 = pc_.points[quadrilaterals_[i][0]];
+      pcl::PointXYZ p1 = pc_.points[quadrilaterals_[i][1]];
+      pcl::PointXYZ p2 = pc_.points[quadrilaterals_[i][2]];
+      pcl::PointXYZ p3 = pc_.points[quadrilaterals_[i][3]];
 
-    if (normal(2) < 0) {
-      unsigned int temp = triangles_[i][0];
-      triangles_[i][0] = triangles_[i][1];
-      triangles_[i][1] = temp;
-      nodes_reversed++;
+      Eigen::Vector3d v0(p0.x, p0.y, p0.z);
+      Eigen::Vector3d v1(p1.x, p1.y, p1.z);
+      Eigen::Vector3d v2(p2.x, p2.y, p2.z);
+      Eigen::Vector3d v3(p3.x, p3.y, p3.z);
+
+      Eigen::Vector3d normal1 = (v1 - v0).cross(v2 - v0);
+      normal1.normalize();
+      Eigen::Vector3d normal2 = (v2 - v0).cross(v3 - v0);
+      normal2.normalize();
+
+      if (normal1(2) < 0 || normal2(2) < 0) {
+        unsigned int temp = quadrilaterals_[i][0];
+        quadrilaterals_[i][0] = quadrilaterals_[i][1];
+        quadrilaterals_[i][1] = quadrilaterals_[i][2];
+        quadrilaterals_[i][2] = quadrilaterals_[i][3];
+        quadrilaterals_[i][3] = temp;
+        nodes_reversed++;
+      }
     }
+
+  } else {
+    for (unsigned int i=0; i<triangles_.size(); i++) {
+      pcl::PointXYZ p0 = pc_.points[triangles_[i][0]];
+      pcl::PointXYZ p1 = pc_.points[triangles_[i][1]];
+      pcl::PointXYZ p2 = pc_.points[triangles_[i][2]];
+
+      Eigen::Vector3d v0(p0.x, p0.y, p0.z);
+      Eigen::Vector3d v1(p1.x, p1.y, p1.z);
+      Eigen::Vector3d v2(p2.x, p2.y, p2.z);
+
+      Eigen::Vector3d normal = (v1 - v0).cross(v2 - v0);
+      normal.normalize();
+
+      if (normal(2) < 0) {
+        unsigned int temp = triangles_[i][0];
+        triangles_[i][0] = triangles_[i][1];
+        triangles_[i][1] = temp;
+        nodes_reversed++;
+      }
+    }
+
   }
+
+
+
+
 
   return nodes_reversed;
 }
@@ -247,6 +344,12 @@ int FEM::CheckNodeOrderConsistency() {
 bool FEM::Compute(bool moving_least_squares) {
   bool ok = InitCloud();
 
+  if (element_ == "C3D8") {
+    transform_into_quads_ = true;
+  } else {
+    transform_into_quads_ = false;
+  }
+
   if (ok && moving_least_squares) {
     ok = MovingLeastSquares();
     std::cout << " - MovingLeastSquares: " << ok << std::endl;
@@ -255,6 +358,13 @@ bool FEM::Compute(bool moving_least_squares) {
   if (ok) {
     ok = Triangulate();
     std::cout << " - Triangulate: " << ok << std::endl;
+  }
+
+  if (ok && transform_into_quads_) {
+    ok = TransformIntoQuads();
+    std::cout << " - TransformIntoQuads: " << ok << std::endl;
+    ok = InitCloud();
+    std::cout << " - Cloud Re-Initialized: " << ok << std::endl;
   }
 
   if (ok) {
@@ -419,6 +529,84 @@ void FEM::ViewMesh(bool extrusion,
       viewer.addLine<pcl::PointXYZ>(p0, p1, 0.7, 0.9, 0.7, name + "_a");
       viewer.addLine<pcl::PointXYZ>(p1, p2, 0.7, 0.9, 0.7, name + "_b");
       viewer.addLine<pcl::PointXYZ>(p2, p0, 0.7, 0.9, 0.7, name + "_c");
+    }
+
+    for (unsigned int i=0; i<points2_.size(); i++) {
+      pcl::PointXYZ p0 = cloud->points[i];
+      pcl::PointXYZ p1(points2_[i](0), points2_[i](1), points2_[i](2));
+      std::string name = "line_1_" + std::to_string(i);
+
+      // Add line
+      viewer.addLine<pcl::PointXYZ>(p0, p1, 0.7, 0.9, 0.7, name);
+    }
+  }
+
+  // If pose_ not zero, then add as a thick point
+  if (pose_.second.norm() > 0) {
+    pcl::PointXYZ p1(pose_.second(0), pose_.second(1), pose_.second(2));
+    viewer.addSphere(p1, 0.1, 0.0, 0.7, 0.0, "pose_");
+
+    // Add a line in the direction of the quaternion in pose2.first
+    std::pair<Eigen::Vector3d, Eigen::Vector3d> line_pts = QuaternionLine(pose_.first, pose_.second);
+    pcl::PointXYZ p1_a(line_pts.first(0), line_pts.first(1), line_pts.first(2));
+    pcl::PointXYZ p1_b(line_pts.second(0), line_pts.second(1), line_pts.second(2));
+    viewer.addLine<pcl::PointXYZ>(p1_a, p1_b, 0.0, 0.7, 0.0, "pose_line");
+  }
+
+  viewer.addCoordinateSystem(0.5);
+
+  if (wait > 0) {
+    viewer.spinOnce(wait*1000);
+    return;
+  } else {
+    viewer.spin();
+  }
+  viewer.close();
+}
+
+
+void FEM::ViewMeshQuads(bool extrusion,
+                        int wait) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> (pc_));
+
+  pcl::visualization::PCLVisualizer viewer;
+  viewer.setBackgroundColor(1, 1, 1);
+  viewer.addPointCloud(cloud);
+  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2);
+  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 0.0);
+
+  for (unsigned int i=0; i<quadrilaterals_.size(); i++) {
+    pcl::PointXYZ p0 = cloud->points[quadrilaterals_[i][0]];
+    pcl::PointXYZ p1 = cloud->points[quadrilaterals_[i][1]];
+    pcl::PointXYZ p2 = cloud->points[quadrilaterals_[i][2]];
+    pcl::PointXYZ p3 = cloud->points[quadrilaterals_[i][3]];
+    std::string name = "quadrilateral_1_" + std::to_string(i);
+
+    // Add line
+    viewer.addLine<pcl::PointXYZ>(p0, p1, 0.0, 0.7, 0.0, name + "a");
+    viewer.addLine<pcl::PointXYZ>(p1, p2, 0.0, 0.7, 0.0, name + "b");
+    viewer.addLine<pcl::PointXYZ>(p2, p3, 0.0, 0.7, 0.0, name + "c");
+    viewer.addLine<pcl::PointXYZ>(p3, p0, 0.0, 0.7, 0.0, name + "d");
+  }
+
+  if (extrusion) {
+    for (unsigned int i=0; i<quadrilaterals_.size(); i++) {
+      Eigen::Vector3d p0e = points2_[quadrilaterals_[i][0]];
+      Eigen::Vector3d p1e = points2_[quadrilaterals_[i][1]];
+      Eigen::Vector3d p2e = points2_[quadrilaterals_[i][2]];
+      Eigen::Vector3d p3e = points2_[quadrilaterals_[i][3]];
+
+      pcl::PointXYZ p0(p0e(0), p0e(1), p0e(2));
+      pcl::PointXYZ p1(p1e(0), p1e(1), p1e(2));
+      pcl::PointXYZ p2(p2e(0), p2e(1), p2e(2));
+      pcl::PointXYZ p3(p3e(0), p3e(1), p3e(2));
+      std::string name = "quadrilateral_1_" + std::to_string(i) + "_extrusion";
+
+      // Add line
+      viewer.addLine<pcl::PointXYZ>(p0, p1, 0.7, 0.9, 0.7, name + "_a");
+      viewer.addLine<pcl::PointXYZ>(p1, p2, 0.7, 0.9, 0.7, name + "_b");
+      viewer.addLine<pcl::PointXYZ>(p2, p3, 0.7, 0.9, 0.7, name + "_c");
+      viewer.addLine<pcl::PointXYZ>(p3, p0, 0.7, 0.9, 0.7, name + "_d");
     }
 
     for (unsigned int i=0; i<points2_.size(); i++) {
