@@ -45,7 +45,7 @@ void simulation_manual() {
   POS pos(fem2.GetEigenNodes(), fem2.GetPose());
   pos.SetTarget(fem1.GetEigenNodes());
 
-  double ang = 0*M_PI/180;
+  double ang = 5*M_PI/180;
   Eigen::Vector3d axis(1,1,1);
 
   Eigen::Vector4d imposed_angle_q = pos.QuaternionFromAngleAxis(axis, ang);
