@@ -208,6 +208,34 @@ double FEA::ComputeStrainEnergy(std::vector<Eigen::Vector3d> &u0,
 
 
 
+double FEA::ComputeStrainEnergyPoseOptimization(
+  std::vector<Eigen::Vector3d> &u0,
+  std::vector<Eigen::Vector3d> &u1) {
+
+  int dim_in = u0.size() * 3;
+  int dim_k = K_.rows();
+
+  if (dim_in != dim_k) {
+    std::cout << "Error: dim_in != dim_k" << std::endl;
+    return -1.0;
+  }
+
+  Eigen::MatrixXd U = Eigen::MatrixXd::Zero(dim_in, 1);
+  for (unsigned int i = 0; i < u0.size()/2; i++) {
+    U(i*3, 0) = u1[i][0] - u0[i][0];
+    U(i*3+1, 0) = u1[i][1] - u0[i][1];
+    U(i*3+2, 0) = u1[i][2] - u0[i][2];
+  }
+
+  Eigen::MatrixXd Fi = K_ * U;
+
+  double sE = 0.5 * (U.transpose() * Fi)(0,0);
+
+  return sE;
+}
+
+
+
 
 
 

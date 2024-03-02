@@ -58,6 +58,7 @@ public:
   void ComputeExtrusion();
   std::vector<Eigen::Vector3d> GetExtrusionDelta();
   std::vector<Eigen::Vector3d> GetExtrusion();
+  std::vector<unsigned int> GetExtrusionIndices();
   void SetExtrusion(std::vector<Eigen::Vector3d> extrusion_delta, double element_height);
   double GetElementHeight();
 

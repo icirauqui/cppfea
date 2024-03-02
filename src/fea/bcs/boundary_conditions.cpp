@@ -65,6 +65,12 @@ void BoundaryConditions::AddNodalDisplacementByCoordsXYZ(float x, float y, float
 }
 
 
+void BoundaryConditions::AddEncastreByNodeIds(std::vector<unsigned int> &node_ids) {
+  std::vector<double> values = std::vector<double>(_num_dof, 0.0);
+  AddNodalByNodeIds(node_ids, values);
+}
+
+
 void BoundaryConditions::EncastreInCoordX(float x) {
   std::vector<double> coords = std::vector<double>(_num_dof, 0.0);
   coords[0] = x;

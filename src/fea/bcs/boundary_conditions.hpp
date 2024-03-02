@@ -14,7 +14,6 @@ public:
 
   void AddNodalByNodeIds(std::vector<unsigned int> &node_ids, std::vector<double> &values);
 
-
   virtual void AddNodalByCoords(std::vector<double> coords, std::vector<bool> dof, std::vector<double> values) = 0;
 
   void AddNodalDisplacementByCoordX(float x, std::vector<double> values);
@@ -23,6 +22,7 @@ public:
   void AddNodalDisplacementByCoordsXY(float x, float y, std::vector<double> values);
   void AddNodalDisplacementByCoordsXYZ(float x, float y, float z, std::vector<double> values);
 
+  void AddEncastreByNodeIds(std::vector<unsigned int> &node_ids);
 
   virtual void EncastreInCoord(std::vector<double> coords, std::vector<bool> dof) = 0;
 

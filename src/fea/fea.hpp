@@ -98,6 +98,9 @@ public:
   double ComputeStrainEnergy();
   double ComputeStrainEnergy(std::vector<Eigen::Vector3d> &u0,
                              std::vector<Eigen::Vector3d> &u1);
+  double ComputeStrainEnergyPoseOptimization(
+    std::vector<Eigen::Vector3d> &u0,
+    std::vector<Eigen::Vector3d> &u1);
 
   
   // Legacy fea

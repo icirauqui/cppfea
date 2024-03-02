@@ -17,7 +17,8 @@ int main(int argc, char** argv) {
   //test_c2d4_displacements();
   //test_c2d4_loads();
 
-  simulation_manual();
+  //simulation_manual();
+  simulation_optimizer();
 
 
 

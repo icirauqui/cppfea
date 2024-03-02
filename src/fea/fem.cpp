@@ -341,6 +341,15 @@ std::vector<Eigen::Vector3d> FEM::GetExtrusion() {
   return points2_;
 }
 
+std::vector<unsigned int> FEM::GetExtrusionIndices() {
+  std::vector<unsigned int> indices;
+  unsigned int layer_size = points_.size();
+  for (unsigned int i=0; i<points_.size(); i++) {
+    indices.push_back(i + layer_size);
+  }
+  return indices;
+}
+
 void FEM::SetExtrusion(std::vector<Eigen::Vector3d> extrusion_delta, double element_height) {
   for (unsigned int i=0; i<points_.size(); i++) {
     Eigen::Vector3d pt2 = points_[i] + extrusion_delta[i];

@@ -27,21 +27,35 @@ public:
   LevenbergMarquardt(
     POS* pos, FEA* fea,
     int maxIterations = 1000, double lambda = 0.001, 
-    double damping_factor = 2.0, double tolerance = 0.000001);
+    double damping_factor = 2.0, double tolerance = 0.0001);
 
-  std::pair<double, Eigen::VectorXd> Optimize(const Eigen::VectorXd params0);
+  std::pair<double, Eigen::VectorXd> Optimize(
+    const std::pair<Eigen::Matrix<double, 4, 1>, Eigen::Matrix<double, 3, 1> > params_in);
+  std::pair<double, Eigen::VectorXd> OptimizeCLM(
+    const std::pair<Eigen::Matrix<double, 4, 1>, Eigen::Matrix<double, 3, 1> > params_in);
+  std::pair<double, Eigen::VectorXd> OptimizeCLM(const Eigen::VectorXd params0);
 
-  double GetResidual();
 
   void ComputeResidual(const mrpt::math::CVectorDouble& x, 
                        const mrpt::math::CVectorDouble& y, 
                        mrpt::math::CVectorDouble& out_f);
 
+  double ComputeResidual(const Eigen::VectorXd& pose);
+
+  double GetResidual();
+
 private:
 
 
-  Eigen::MatrixXd ComputeJacobian(const Eigen::VectorXd& params, double residual_original, 
-                                  double delta_t = 0.001, double delta_q = 0.0001, double delta_s = 0.00001);
+  Eigen::VectorXd ComputeJacobian(const Eigen::VectorXd& params, double residual_original, double epsilon = 0.0001);
+  Eigen::VectorXd ComputeJacobian3d(const Eigen::VectorXd& params, double residual_original,
+                                    double delta_q = 0.0001, double delta_t = 0.01, double delta_s = 0.0001);
+
+  double InitializeLambda(const Eigen::VectorXd& jacobian, double initial_residual);
+
+  Eigen::VectorXd PosePairToMatrix(const std::pair<Eigen::Vector4d, Eigen::Vector3d> pose);
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> MatrixToPosePair(const Eigen::VectorXd pose_vec);
+  double ScaleFromMatrix(const Eigen::VectorXd pose_vec);
 
   POS* pos_;
   FEA* fea_;
