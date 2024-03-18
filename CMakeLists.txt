@@ -26,3 +26,16 @@ target_link_libraries(cppfea PRIVATE
     nlo
     ${MRPT_LIBRARIES}
 )
+
+# create library
+add_library(cppfea_lib STATIC
+    src/main.cpp
+)
+
+target_link_libraries(cppfea_lib PRIVATE 
+    vis
+    fea
+    dataset
+    nlo
+    ${MRPT_LIBRARIES}
+)
