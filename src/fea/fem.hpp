@@ -7,6 +7,7 @@
 #include <math.h>
 #include <fstream>
 #include <unordered_map>
+#include <algorithm>
 
 #include <eigen3/Eigen/Dense>
 
@@ -52,6 +53,10 @@ public:
   
   bool Triangulate();
 
+  void SimulateFailedTriangulation();
+
+  bool ClearNotTriangulated();
+
   Eigen::Vector3d calculateMidpoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2);
 
   Eigen::Vector3d calculateOrthocenter(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, const Eigen::Vector3d& p3);
@@ -60,7 +65,7 @@ public:
   
   int CheckNodeOrderConsistency();
 
-  bool Compute(bool moving_least_squares = true);
+  bool Compute(bool moving_least_squares = true, bool simulation = false);
 
   void ComputeExtrusion();
   std::vector<Eigen::Vector3d> GetExtrusionDelta();
@@ -68,6 +73,7 @@ public:
   std::vector<unsigned int> GetExtrusionIndices();
   void SetExtrusion(std::vector<Eigen::Vector3d> extrusion_delta, double element_height);
   double GetElementHeight();
+  std::vector<unsigned int> GetIndicesNotTriangulated();
 
   void ViewMesh(bool extrusion = false,
                 std::vector<Eigen::Vector3d> cloud2 = std::vector<Eigen::Vector3d>(),
@@ -102,6 +108,9 @@ public:
   std::pair<Eigen::Vector4d, Eigen::Vector3d> GetPose();
 
 
+
+
+
 private:
 
   std::pair<Eigen::Vector3d, Eigen::Vector3d> QuaternionLine2(
@@ -113,6 +122,7 @@ private:
 
   std::vector<Eigen::Vector3d> points_, points2_;
   std::vector<bool> points_alive_;
+  std::vector<unsigned int> indices_not_triangulated_;
 
   pcl::PointCloud<pcl::PointXYZ> pc_, pc2_;
 

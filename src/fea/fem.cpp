@@ -213,6 +213,128 @@ bool FEM::Triangulate() {
 }
 
 
+/*
+void FEM::SimulateFailedTriangulation() {
+  // 5% of points are removed
+  int num_points = points_.size();
+  int num_removed = num_points * 0.05;
+  if (num_removed < 1) {
+    num_removed = 1;
+  }
+
+  std::vector<int> removed_indices;
+  //for (int i = 0; i < num_removed; i++) {
+  //  int idx = rand() % num_points;
+  //  points_alive_[idx] = false;
+  //  removed_indices.push_back(idx);
+  //}
+  removed_indices.push_back(0);
+  points_alive_[0] = false;
+  removed_indices.push_back(2);
+  points_alive_[2] = false;
+
+  std::cout << " - SimulateFailedTriangulation: " << num_removed << " points removed" << std::endl;
+  std::cout << "   Indices:";
+  for (auto i: removed_indices) {
+    std::cout << " " << i;
+  }
+  std::cout << std::endl;
+
+  // Copy triangles vector
+  std::vector<std::vector<unsigned int>> old_triangles;
+  for (auto t: triangles_) {
+    std::vector<unsigned int> newt;
+    for (auto i: t) {
+      newt.push_back(i);
+    }
+    old_triangles.push_back(newt);
+  }
+  triangles_.clear();
+
+  for (auto t: old_triangles) {
+    std::vector<unsigned int> newt;
+    for (auto i: t) {
+      if (points_alive_[i]) {
+        newt.push_back(i);
+      }
+    }
+    if (newt.size() == 3) {
+      triangles_.push_back(newt);
+    }
+  }
+
+  std::cout << "   Number of original triangles: " << old_triangles.size() << std::endl;
+  std::cout << "   Number of revised triangles:  " << triangles_.size() << std::endl;
+}
+*/
+
+void FEM::SimulateFailedTriangulation() {
+  std::cout << " - SimulateFailedTriangulation" << std::endl;
+  std::cout << "   Original number of triangles: " << triangles_.size() << std::endl;
+  // Remove triangle 0
+  if (!triangles_.empty()) {
+    triangles_.erase(triangles_.begin());
+  }
+  std::cout << "   Revised number of triangles: " << triangles_.size() << std::endl;
+
+}
+
+bool FEM::ClearNotTriangulated() {
+  std::cout << " - ClearNotTriangulated" << std::endl;
+
+  std::vector<unsigned int> point_map = std::vector<unsigned int>(points_.size(), -1);
+  std::vector<unsigned int> triangle_indices;
+  for (auto t: triangles_) {
+    for (auto i: t) {
+      auto it = std::find(triangle_indices.begin(), triangle_indices.end(), i);
+      if (it == triangle_indices.end()) {
+        triangle_indices.push_back(i);
+      }
+    }
+  }
+
+  //std::cout << "   ";
+  //for (unsigned int i=0; i<triangle_indices.size(); i++) {
+  //  std::cout << " " << triangle_indices[i];
+  //}
+  //std::cout << std::endl;
+
+  std::vector<Eigen::Vector3d> new_points;
+  std::vector<bool> new_points_alive;
+  indices_not_triangulated_.clear();
+
+  for (unsigned int i=0; i<points_.size(); i++) {
+    auto it = std::find(triangle_indices.begin(), triangle_indices.end(), i);
+    if (it != triangle_indices.end()) {
+      new_points.push_back(points_[i]);
+      new_points_alive.push_back(true);
+      point_map[i] = new_points.size() - 1;
+    }
+    else {
+      indices_not_triangulated_.push_back(i);
+    }
+  }
+
+  std::cout << "   Original point cloud size: " << points_.size() << std::endl;
+  std::cout << "   Revised point cloud size: " << new_points.size() << std::endl;
+
+  if (points_.size() == new_points.size()) {
+    std::cout << "   No points removed" << std::endl;
+    return true;
+  } 
+
+  points_ = new_points;
+  points_alive_ = new_points_alive;
+
+  // Modify triangle indices
+  for (unsigned int i=0; i<triangles_.size(); i++) {
+    for (unsigned int j=0; j<triangles_[i].size(); j++) {
+      triangles_[i][j] = point_map[triangles_[i][j]];
+    }
+  }
+
+  return InitCloud();
+}
 
 Eigen::Vector3d FEM::calculateMidpoint(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2) {
     return (p1 + p2) / 2.0;
@@ -341,7 +463,7 @@ int FEM::CheckNodeOrderConsistency() {
 
 
 
-bool FEM::Compute(bool moving_least_squares) {
+bool FEM::Compute(bool moving_least_squares, bool simulation) {
   bool ok = InitCloud();
 
   if (element_ == "C3D8") {
@@ -371,6 +493,14 @@ bool FEM::Compute(bool moving_least_squares) {
     int nodes_reversed = CheckNodeOrderConsistency();
     std::cout << " - CheckNodeOrderConsistency: " << nodes_reversed << " nodes reversed" << std::endl;
     ok = nodes_reversed != -1;
+  }
+  
+  if (ok) {
+    if (simulation) {
+      SimulateFailedTriangulation();  
+    }
+    ok = ClearNotTriangulated();
+    std::cout << " - ClearNotTriangulated: " << ok << std::endl;
   }
 
   return ok;
@@ -472,6 +602,9 @@ double FEM::GetElementHeight() {
   return element_height_;
 }
 
+std::vector<unsigned int> FEM::GetIndicesNotTriangulated() {
+  return indices_not_triangulated_;
+}
 
 void FEM::ViewMesh(bool extrusion, 
                    std::vector<Eigen::Vector3d> cloud2,

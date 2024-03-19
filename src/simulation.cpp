@@ -119,21 +119,29 @@ void simulation_optimizer() {
   
   std::cout << "\nCreate FEM objects and add points" << std::endl;
   FEM fem1(element);
-  FEM fem2(element);
   for (unsigned int i=0; i<vpts.size(); i++) {
     fem1.AddPoint(Eigen::Vector3d(vpts[i][0], vpts[i][1], vpts[i][2]));
-    fem2.AddPoint(Eigen::Vector3d(vpts[i][0], vpts[i][1], vpts[i][2]));
-  }
-
-
-
+  }  
+  
   std::cout << "\nTriangulate and compute poses" << std::endl;
-  fem1.Compute(true);
+  fem1.Compute(true, true);
   fem1.ComputeExtrusion();
-  //fem1.ViewMesh(true, 0);
+  fem1.ViewMesh(true, 0);
+
+
+  FEM fem2(element);
+  std::vector<unsigned int> indices_not_triangulated = fem1.GetIndicesNotTriangulated();
+  for (unsigned int i=0; i<vpts.size(); i++) {
+    auto it = std::find(indices_not_triangulated.begin(), indices_not_triangulated.end(), i);
+    if (it == indices_not_triangulated.end()) {
+      fem2.AddPoint(Eigen::Vector3d(vpts[i][0], vpts[i][1], vpts[i][2]));
+    }
+  }
+  fem2.SetTriangles(fem1.GetTriangles());
+  //bool ok = fem2.ClearNotTriangulated();
   fem2.InitCloud();
   fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
-  //fem1.ViewMesh(true, fem2.GetCloud(), fem2.GetExtrusion(), fem2.GetPose(), 0);
+  fem1.ViewMesh(true, fem2.GetCloud(), fem2.GetExtrusion(), fem2.GetPose(), 0);
 
 
 
