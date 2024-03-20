@@ -859,6 +859,7 @@ void FEM::ViewMesh(bool extrusion,
                    std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2,
                    int wait) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> (pc_));
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudb(new pcl::PointCloud<pcl::PointXYZ> (pc2_));
 
   pcl::visualization::PCLVisualizer viewer;
   viewer.setBackgroundColor(1, 1, 1);
@@ -878,15 +879,18 @@ void FEM::ViewMesh(bool extrusion,
     viewer.addLine<pcl::PointXYZ>(p2, p0, 0.0, 0.7, 0.0, name + "c");
   }
 
+  for (unsigned int i=0; i<points_alive_.size(); i++) {
+    if (points_alive_[i]) {
+      continue;
+    }
+    viewer.addSphere(cloud->points[i], 0.01, 0.0, 0.7, 0.0, "point_not_alive_" + std::to_string(i));
+  }
+
   if (extrusion) {
     for (unsigned int i=0; i<triangles_.size(); i++) {
-      Eigen::Vector3d p0e = points2_[triangles_[i][0]];
-      Eigen::Vector3d p1e = points2_[triangles_[i][1]];
-      Eigen::Vector3d p2e = points2_[triangles_[i][2]];
-
-      pcl::PointXYZ p0(p0e(0), p0e(1), p0e(2));
-      pcl::PointXYZ p1(p1e(0), p1e(1), p1e(2));
-      pcl::PointXYZ p2(p2e(0), p2e(1), p2e(2));
+      pcl::PointXYZ p0 = cloudb->points[triangles_[i][0]];
+      pcl::PointXYZ p1 = cloudb->points[triangles_[i][1]];
+      pcl::PointXYZ p2 = cloudb->points[triangles_[i][2]];
       std::string name = "triangle_1_" + std::to_string(i) + "_extrusion";
 
       // Add line
@@ -895,12 +899,16 @@ void FEM::ViewMesh(bool extrusion,
       viewer.addLine<pcl::PointXYZ>(p2, p0, 0.7, 0.9, 0.7, name + "_c");
     }
 
-    for (unsigned int i=0; i<points2_.size(); i++) {
-      pcl::PointXYZ p0 = cloud->points[i];
-      pcl::PointXYZ p1(points2_[i](0), points2_[i](1), points2_[i](2));
-      std::string name = "line_1_" + std::to_string(i);
+    std::cout << " Cloud points size = " << cloud->points.size() << std::endl;
+    std::cout << " points alive size = " << points_alive_.size() << std::endl;
+    for (unsigned int i=0; i<cloud->points.size(); i++) {
+      if (!points_alive_[i]) {
+        continue;
+      }
 
-      // Add line
+      pcl::PointXYZ p0 = cloud->points[i];
+      pcl::PointXYZ p1 = cloudb->points[i];
+      std::string name = "line_1_" + std::to_string(i);
       viewer.addLine<pcl::PointXYZ>(p0, p1, 0.7, 0.9, 0.7, name);
     }
   }
@@ -910,11 +918,11 @@ void FEM::ViewMesh(bool extrusion,
     pcl::PointXYZ p1(pose_.second(0), pose_.second(1), pose_.second(2));
     viewer.addSphere(p1, 0.1, 0.0, 0.7, 0.0, "pose_");
 
-      // Add a line in the direction of the quaternion in pose2.first
-      std::pair<Eigen::Vector3d, Eigen::Vector3d> line_pts = QuaternionLine(pose_.first, pose_.second);
-      pcl::PointXYZ p1_a(line_pts.first(0), line_pts.first(1), line_pts.first(2));
-      pcl::PointXYZ p1_b(line_pts.second(0), line_pts.second(1), line_pts.second(2));
-      viewer.addLine<pcl::PointXYZ>(p1_a, p1_b, 0.0, 0.7, 0.0, "pose__line");
+    // Add a line in the direction of the quaternion in pose2.first
+    std::pair<Eigen::Vector3d, Eigen::Vector3d> line_pts = QuaternionLine(pose_.first, pose_.second);
+    pcl::PointXYZ p1_a(line_pts.first(0), line_pts.first(1), line_pts.first(2));
+    pcl::PointXYZ p1_b(line_pts.second(0), line_pts.second(1), line_pts.second(2));
+    viewer.addLine<pcl::PointXYZ>(p1_a, p1_b, 0.0, 0.7, 0.0, "pose_line");
   }
 
   if (cloud2.points.size() > 0) {

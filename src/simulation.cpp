@@ -142,7 +142,7 @@ void simulation_optimizer() {
   //fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
   fem1.ViewMesh(true, fem2.GetCloud(), fem2.GetExtrusion(), fem2.GetPose(), 0);
 
-  return;
+  //return;
 
   std::cout << "\nTransform pose 2 for simulation, impose a rotation of x degrees around each axis" << std::endl;
   POS pos(fem2.GetEigenNodes(true), fem2.GetPose());
@@ -166,7 +166,7 @@ void simulation_optimizer() {
   fea.MatAssembly(nodes, elements);
 
 
-  return;
+  //return;
 
   std::cout << "\nSet Boundary Conditions" << std::endl;
   std::vector<unsigned int> bc_nodes = fem1.GetExtrusionIndices();
