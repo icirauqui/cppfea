@@ -44,6 +44,7 @@ class FEM {
 public:
 
   FEM(std::string element);
+  FEM(FEM& fem);
 
   void AddPoint(Eigen::Vector3d point);
 
@@ -74,7 +75,12 @@ public:
   void SetExtrusion(std::vector<Eigen::Vector3d> extrusion_delta, double element_height);
   double GetElementHeight();
   std::vector<unsigned int> GetIndicesNotTriangulated();
+  std::vector<Eigen::Vector3d> GetPoints(bool alive_only = true);
 
+
+  void ViewMesh(bool extrusion = false,
+                int wait = 0);
+    
   void ViewMesh(bool extrusion = false,
                 std::vector<Eigen::Vector3d> cloud2 = std::vector<Eigen::Vector3d>(),
                 std::vector<Eigen::Vector3d> cloud2extrusion = std::vector<Eigen::Vector3d>(),
@@ -82,19 +88,13 @@ public:
                 int wait = 0);
 
   void ViewMesh(bool extrusion = false,
-                int wait = 0);
-
-  void ViewMeshQuads(bool extrusion = false,
-                int wait = 0);
-                   
-  void ViewMesh(bool extrusion = false,
                 pcl::PointCloud<pcl::PointXYZ> cloud2 = pcl::PointCloud<pcl::PointXYZ>(),
                 std::vector<Eigen::Vector3d> cloud2extrusion = std::vector<Eigen::Vector3d>(),
                 std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2 = std::make_pair(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 0.0)),
                 int wait = 0);
 
   std::vector<std::vector<float>> GetNodes();
-  std::vector<Eigen::Vector3d> GetEigenNodes();
+  std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true);
   std::vector<Eigen::Vector3d> GetEigenBaseNodes();
   std::vector<Eigen::Vector3d> GetEigenExtrudedNodes();
 
@@ -105,7 +105,9 @@ public:
   void SetElements(std::vector<std::vector<unsigned int>> elements);
 
   pcl::PointCloud<pcl::PointXYZ> GetCloud();
+  pcl::PointCloud<pcl::PointXYZ> GetCloud2();
   std::pair<Eigen::Vector4d, Eigen::Vector3d> GetPose();
+
 
 
 
@@ -130,7 +132,7 @@ private:
 
   bool transform_into_quads_ = false;
 
-  std::vector<int> mls_indices_;
+  std::vector<int> mls_indices_, points_indices_;
 
   std::vector<Eigen::Vector3d> normals_;
 

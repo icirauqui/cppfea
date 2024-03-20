@@ -25,6 +25,27 @@ std::pair<Eigen::Vector4d, Eigen::Vector3d> ApproximatePose(std::vector<Eigen::V
 
 FEM::FEM(std::string element): element_(element) {}
 
+
+FEM::FEM(FEM& fem) {
+  element_ = fem.element_;
+  points_ = fem.points_;
+  points_alive_ = fem.points_alive_;
+  pc_ = fem.pc_;
+  points_indices_ = fem.points_indices_;
+  mls_indices_ = fem.mls_indices_;
+  normals_ = fem.normals_;
+  mesh_ = fem.mesh_;
+  triangles_ = fem.triangles_;
+  quadrilaterals_ = fem.quadrilaterals_;
+  indices_not_triangulated_ = fem.indices_not_triangulated_;
+  points2_ = fem.points2_;
+  pc2_ = fem.pc2_;
+  elements_ = fem.elements_;
+  transform_into_quads_ = fem.transform_into_quads_;
+  element_height_ = fem.element_height_;
+  pose_ = fem.pose_;
+}
+
 void FEM::AddPoint(Eigen::Vector3d point) {
   points_.push_back(point);
   points_alive_.push_back(true);
@@ -35,12 +56,27 @@ bool FEM::InitCloud() {
   pc_.width = points_.size();
   pc_.height = 1;
   pc_.points.resize(pc_.width * pc_.height);
+  points_indices_.clear();
+
+  // simulation
+  //points_alive_[4] = false;
 
   for (size_t i = 0; i < pc_.points.size(); ++i) {
+    if (!points_alive_[i]) {
+      continue;
+    }
+
+    points_indices_.push_back(i);
     pc_.points[i].x = points_[i](0);
     pc_.points[i].y = points_[i](1);
     pc_.points[i].z = points_[i](2);
   }
+
+  // simulation
+  //for (int i=0; i<points_indices_.size(); i++) {
+  //  std::cout << " " << points_indices_[i];
+  //}
+  //std::cout << std::endl;
 
   if (pc_.width == 0) {
     std::cout << " - InitCloud failed" << std::endl;
@@ -90,15 +126,32 @@ bool FEM::MovingLeastSquares() {
   for (unsigned int i = 0; i < pIdx1->indices.size(); i++)
     mls_indices_.push_back(pIdx1->indices[i]);
 
+  //std::cout << std::endl;
+  //for (int i = 0; i<points_alive_.size(); i++) {
+  //  std::cout << " " << points_alive_[i];
+  //}
+  //std::cout << std::endl;
+
+  // simulation: erase position 6 in mls_indices_
+  //mls_indices_.erase(mls_indices_.begin() + 6);
+  
+  std::vector<int> points_indices;
   int idxit = 0;
-  for (unsigned int i = 0; i < points_.size(); i++) {
-    int currentpos = i;
-    if (currentpos == mls_indices_[idxit]) {
+  for (unsigned int i = 0; i < points_indices_.size(); i++) {
+    if (i == mls_indices_[idxit]) {
       idxit++;
+      points_indices.push_back(points_indices_[i]);
     } else {
-      points_alive_[i] = false;
+      points_alive_[points_indices_[i]] = false;
     }
   }
+  points_indices_ = points_indices;
+
+  // simulation
+  //for (int i = 0; i<points_indices_.size(); i++) {
+  //  std::cout << " " << points_indices_[i];
+  //}
+  //std::cout << std::endl;
 
   // Replace pc_ with mls_points
   pc_.width = mls_points.size();
@@ -207,6 +260,14 @@ bool FEM::Triangulate() {
       triangle.push_back(nver2);
       triangles_.push_back(triangle);
     }
+
+    // Transform triangles accounting for points_active_
+    //for (unsigned int i=0; i<triangles_.size(); i++) {
+    //  for (unsigned int j=0; j<triangles_[i].size(); j++) {
+    //    triangles_[i][j] = points_indices_[triangles_[i][j]];
+    //  }
+    //}
+
   }
   
   return triangles_.size() > 0 ? true : false;
@@ -279,6 +340,7 @@ void FEM::SimulateFailedTriangulation() {
 
 }
 
+/*
 bool FEM::ClearNotTriangulated() {
   std::cout << " - ClearNotTriangulated" << std::endl;
 
@@ -332,6 +394,59 @@ bool FEM::ClearNotTriangulated() {
       triangles_[i][j] = point_map[triangles_[i][j]];
     }
   }
+
+  return InitCloud();
+}
+*/
+
+bool FEM::ClearNotTriangulated() {
+  std::cout << " - ClearNotTriangulated" << std::endl;
+
+  //// Transform triangles accounting for points_active_
+  //for (unsigned int i=0; i<triangles_.size(); i++) {
+  //  for (unsigned int j=0; j<triangles_[i].size(); j++) {
+  //    triangles_[i][j] = points_indices_[triangles_[i][j]];
+  //  }
+  //}
+
+  std::vector<unsigned int> triangle_indices;
+  for (auto t: triangles_) {
+    for (auto i: t) {
+      auto it = std::find(triangle_indices.begin(), triangle_indices.end(), i);
+      if (it == triangle_indices.end()) {
+        triangle_indices.push_back(i);
+      }
+    }
+  }
+
+
+  // Sum of vector of bools
+  int points_alive_0 = std::accumulate(points_alive_.begin(), points_alive_.end(), 0);
+
+  indices_not_triangulated_.clear();
+
+  std::vector<int> points_indices;
+  for (unsigned int i=0; i<points_indices_.size(); i++) {
+    auto it = std::find(triangle_indices.begin(), triangle_indices.end(), i);
+    if (it == triangle_indices.end()) {
+      indices_not_triangulated_.push_back(i);
+      points_alive_[points_indices_[i]] = false;
+    } else {
+      points_indices.push_back(points_indices_[i]);
+    }
+  }
+
+  points_indices_ = points_indices;
+
+  // Sum of vector of bools
+  int points_alive_1 = std::accumulate(points_alive_.begin(), points_alive_.end(), 0);
+  std::cout << "   Original point cloud size: " << points_alive_0 << std::endl;
+  std::cout << "   Revised point cloud size: " << points_alive_1 << std::endl;
+
+  if (points_alive_0 == points_alive_1) {
+    std::cout << "   No points removed" << std::endl;
+    return true;
+  } 
 
   return InitCloud();
 }
@@ -529,8 +644,8 @@ void FEM::ComputeExtrusion() {
   
   // Compute second layer at a distance of 1/2 element height and with the direction of the normal vector
   points2_.clear();
-  pc2_.width = points_.size();
-  pc2_.height = 1;
+  pc2_.width = pc_.width;
+  pc2_.height = pc_.height;
   pc2_.points.resize(pc2_.width * pc2_.height);
 
   // Average normal
@@ -552,16 +667,24 @@ void FEM::ComputeExtrusion() {
     Eigen::Vector3d point2 = points_[i] - element_height_/2 * normal;
     points2_.push_back(point2);
 
-    pc2_.points[i].x = point2(0);
-    pc2_.points[i].y = point2(1);
-    pc2_.points[i].z = point2(2);
+    if (points_alive_[i]) {
+      pc2_.points[i].x = point2(0);
+      pc2_.points[i].y = point2(1);
+      pc2_.points[i].z = point2(2);
+    }
+
+    //pc2_.points[i].x = point2(0);
+    //pc2_.points[i].y = point2(1);
+    //pc2_.points[i].z = point2(2);
   }
+
+  int points_alive = std::accumulate(points_alive_.begin(), points_alive_.end(), 0);
 
   for (std::vector<unsigned int> triangle : triangles_) {
     std::vector<unsigned int> element;
-    element.push_back(triangle[0] + points_.size());
-    element.push_back(triangle[1] + points_.size());
-    element.push_back(triangle[2] + points_.size());
+    element.push_back(triangle[0] + points_alive);
+    element.push_back(triangle[1] + points_alive);
+    element.push_back(triangle[2] + points_alive);
     element.push_back(triangle[0]);
     element.push_back(triangle[1]);
     element.push_back(triangle[2]);
@@ -582,10 +705,13 @@ std::vector<Eigen::Vector3d> FEM::GetExtrusion() {
 }
 
 std::vector<unsigned int> FEM::GetExtrusionIndices() {
+  int points_alive = std::accumulate(points_alive_.begin(), points_alive_.end(), 0);
   std::vector<unsigned int> indices;
-  unsigned int layer_size = points_.size();
   for (unsigned int i=0; i<points_.size(); i++) {
-    indices.push_back(i + layer_size);
+    if (points_alive_[i]) {
+      int idx = indices.size() + points_alive;
+      indices.push_back(idx);
+    }
   }
   return indices;
 }
@@ -606,28 +732,31 @@ std::vector<unsigned int> FEM::GetIndicesNotTriangulated() {
   return indices_not_triangulated_;
 }
 
-void FEM::ViewMesh(bool extrusion, 
-                   std::vector<Eigen::Vector3d> cloud2,
-                   std::vector<Eigen::Vector3d> cloud2extrusion,
-                   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2,
-                   int wait) {
-                    
-  pcl::PointCloud<pcl::PointXYZ> pc;
-  pc.width = cloud2.size();
-  pc.height = 1;
-  pc.points.resize(pc_.width * pc_.height);
-  for (unsigned int i=0; i<cloud2.size(); i++) {
-    pc.points[i].x = cloud2[i](0);
-    pc.points[i].y = cloud2[i](1);
-    pc.points[i].z = cloud2[i](2);
+std::vector<Eigen::Vector3d> FEM::GetPoints(bool alive_only) {
+  if (!alive_only) {
+    return points_;
+  } else {
+    std::vector<Eigen::Vector3d> points_alive;
+    for (unsigned int i=0; i<points_.size(); i++) {
+      if (points_alive_[i]) {
+        points_alive.push_back(points_[i]);
+      }
+    }
+    return points_alive;
   }
-
-  ViewMesh(extrusion, pc, cloud2extrusion, pose2, wait);
 }
+
+
+
+
+
+
 
 void FEM::ViewMesh(bool extrusion,
                    int wait) {
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> (pc_));
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZ> (pc2_));
 
   pcl::visualization::PCLVisualizer viewer;
   viewer.setBackgroundColor(1, 1, 1);
@@ -647,15 +776,18 @@ void FEM::ViewMesh(bool extrusion,
     viewer.addLine<pcl::PointXYZ>(p2, p0, 0.0, 0.7, 0.0, name + "c");
   }
 
+  for (unsigned int i=0; i<points_alive_.size(); i++) {
+    if (points_alive_[i]) {
+      continue;
+    }
+    viewer.addSphere(cloud->points[i], 0.01, 0.0, 0.7, 0.0, "point_not_alive_" + std::to_string(i));
+  }
+
   if (extrusion) {
     for (unsigned int i=0; i<triangles_.size(); i++) {
-      Eigen::Vector3d p0e = points2_[triangles_[i][0]];
-      Eigen::Vector3d p1e = points2_[triangles_[i][1]];
-      Eigen::Vector3d p2e = points2_[triangles_[i][2]];
-
-      pcl::PointXYZ p0(p0e(0), p0e(1), p0e(2));
-      pcl::PointXYZ p1(p1e(0), p1e(1), p1e(2));
-      pcl::PointXYZ p2(p2e(0), p2e(1), p2e(2));
+      pcl::PointXYZ p0 = cloud2->points[triangles_[i][0]];
+      pcl::PointXYZ p1 = cloud2->points[triangles_[i][1]];
+      pcl::PointXYZ p2 = cloud2->points[triangles_[i][2]];
       std::string name = "triangle_1_" + std::to_string(i) + "_extrusion";
 
       // Add line
@@ -664,12 +796,16 @@ void FEM::ViewMesh(bool extrusion,
       viewer.addLine<pcl::PointXYZ>(p2, p0, 0.7, 0.9, 0.7, name + "_c");
     }
 
-    for (unsigned int i=0; i<points2_.size(); i++) {
-      pcl::PointXYZ p0 = cloud->points[i];
-      pcl::PointXYZ p1(points2_[i](0), points2_[i](1), points2_[i](2));
-      std::string name = "line_1_" + std::to_string(i);
+    std::cout << " Cloud points size = " << cloud->points.size() << std::endl;
+    std::cout << " points alive size = " << points_alive_.size() << std::endl;
+    for (unsigned int i=0; i<cloud->points.size(); i++) {
+      if (!points_alive_[i]) {
+        continue;
+      }
 
-      // Add line
+      pcl::PointXYZ p0 = cloud->points[i];
+      pcl::PointXYZ p1 = cloud2->points[i];
+      std::string name = "line_1_" + std::to_string(i);
       viewer.addLine<pcl::PointXYZ>(p0, p1, 0.7, 0.9, 0.7, name);
     }
   }
@@ -697,82 +833,23 @@ void FEM::ViewMesh(bool extrusion,
   viewer.close();
 }
 
-
-void FEM::ViewMeshQuads(bool extrusion,
-                        int wait) {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> (pc_));
-
-  pcl::visualization::PCLVisualizer viewer;
-  viewer.setBackgroundColor(1, 1, 1);
-  viewer.addPointCloud(cloud);
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2);
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 0.0);
-
-  for (unsigned int i=0; i<quadrilaterals_.size(); i++) {
-    pcl::PointXYZ p0 = cloud->points[quadrilaterals_[i][0]];
-    pcl::PointXYZ p1 = cloud->points[quadrilaterals_[i][1]];
-    pcl::PointXYZ p2 = cloud->points[quadrilaterals_[i][2]];
-    pcl::PointXYZ p3 = cloud->points[quadrilaterals_[i][3]];
-    std::string name = "quadrilateral_1_" + std::to_string(i);
-
-    // Add line
-    viewer.addLine<pcl::PointXYZ>(p0, p1, 0.0, 0.7, 0.0, name + "a");
-    viewer.addLine<pcl::PointXYZ>(p1, p2, 0.0, 0.7, 0.0, name + "b");
-    viewer.addLine<pcl::PointXYZ>(p2, p3, 0.0, 0.7, 0.0, name + "c");
-    viewer.addLine<pcl::PointXYZ>(p3, p0, 0.0, 0.7, 0.0, name + "d");
+void FEM::ViewMesh(bool extrusion, 
+                   std::vector<Eigen::Vector3d> cloud2,
+                   std::vector<Eigen::Vector3d> cloud2extrusion,
+                   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2,
+                   int wait) {
+                    
+  pcl::PointCloud<pcl::PointXYZ> pc;
+  pc.width = cloud2.size();
+  pc.height = 1;
+  pc.points.resize(pc_.width * pc_.height);
+  for (unsigned int i=0; i<cloud2.size(); i++) {
+    pc.points[i].x = cloud2[i](0);
+    pc.points[i].y = cloud2[i](1);
+    pc.points[i].z = cloud2[i](2);
   }
 
-  if (extrusion) {
-    for (unsigned int i=0; i<quadrilaterals_.size(); i++) {
-      Eigen::Vector3d p0e = points2_[quadrilaterals_[i][0]];
-      Eigen::Vector3d p1e = points2_[quadrilaterals_[i][1]];
-      Eigen::Vector3d p2e = points2_[quadrilaterals_[i][2]];
-      Eigen::Vector3d p3e = points2_[quadrilaterals_[i][3]];
-
-      pcl::PointXYZ p0(p0e(0), p0e(1), p0e(2));
-      pcl::PointXYZ p1(p1e(0), p1e(1), p1e(2));
-      pcl::PointXYZ p2(p2e(0), p2e(1), p2e(2));
-      pcl::PointXYZ p3(p3e(0), p3e(1), p3e(2));
-      std::string name = "quadrilateral_1_" + std::to_string(i) + "_extrusion";
-
-      // Add line
-      viewer.addLine<pcl::PointXYZ>(p0, p1, 0.7, 0.9, 0.7, name + "_a");
-      viewer.addLine<pcl::PointXYZ>(p1, p2, 0.7, 0.9, 0.7, name + "_b");
-      viewer.addLine<pcl::PointXYZ>(p2, p3, 0.7, 0.9, 0.7, name + "_c");
-      viewer.addLine<pcl::PointXYZ>(p3, p0, 0.7, 0.9, 0.7, name + "_d");
-    }
-
-    for (unsigned int i=0; i<points2_.size(); i++) {
-      pcl::PointXYZ p0 = cloud->points[i];
-      pcl::PointXYZ p1(points2_[i](0), points2_[i](1), points2_[i](2));
-      std::string name = "line_1_" + std::to_string(i);
-
-      // Add line
-      viewer.addLine<pcl::PointXYZ>(p0, p1, 0.7, 0.9, 0.7, name);
-    }
-  }
-
-  // If pose_ not zero, then add as a thick point
-  if (pose_.second.norm() > 0) {
-    pcl::PointXYZ p1(pose_.second(0), pose_.second(1), pose_.second(2));
-    viewer.addSphere(p1, 0.1, 0.0, 0.7, 0.0, "pose_");
-
-    // Add a line in the direction of the quaternion in pose2.first
-    std::pair<Eigen::Vector3d, Eigen::Vector3d> line_pts = QuaternionLine(pose_.first, pose_.second);
-    pcl::PointXYZ p1_a(line_pts.first(0), line_pts.first(1), line_pts.first(2));
-    pcl::PointXYZ p1_b(line_pts.second(0), line_pts.second(1), line_pts.second(2));
-    viewer.addLine<pcl::PointXYZ>(p1_a, p1_b, 0.0, 0.7, 0.0, "pose_line");
-  }
-
-  viewer.addCoordinateSystem(0.5);
-
-  if (wait > 0) {
-    viewer.spinOnce(wait*1000);
-    return;
-  } else {
-    viewer.spin();
-  }
-  viewer.close();
+  ViewMesh(extrusion, pc, cloud2extrusion, pose2, wait);
 }
 
 
@@ -964,13 +1041,17 @@ std::vector<std::vector<float>> FEM::GetNodes() {
   return points;
 }
 
-std::vector<Eigen::Vector3d> FEM::GetEigenNodes() {
+std::vector<Eigen::Vector3d> FEM::GetEigenNodes(bool active_only) {
   std::vector<Eigen::Vector3d> points;
-  for (Eigen::Vector3d pt: points_) {
-    points.push_back(pt);
+  for (unsigned int i=0; i<points_.size(); i++) {
+    if (!active_only || points_alive_[i]) {
+      points.push_back(points_[i]);
+    }
   }
-  for (Eigen::Vector3d pt: points2_) {
-    points.push_back(pt);
+  for (unsigned int i=0; i<points2_.size(); i++) {
+    if (!active_only || points_alive_[i]) {
+      points.push_back(points2_[i]);
+    }
   }
   return points;
 }
@@ -1001,6 +1082,10 @@ void FEM::SetElements(std::vector<std::vector<unsigned int>> elements) {
 
 pcl::PointCloud<pcl::PointXYZ> FEM::GetCloud() {
   return pc_;
+}
+
+pcl::PointCloud<pcl::PointXYZ> FEM::GetCloud2() {
+  return pc2_;
 }
 
 std::pair<Eigen::Vector4d, Eigen::Vector3d> FEM::GetPose() {

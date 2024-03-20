@@ -1,7 +1,7 @@
 #include "fea/fea.hpp"
 #include "fea/fem.hpp"
 #include "fea/pos.hpp"
-#include "vis/vis.hpp"
+//#include "vis/vis.hpp"
 
 #include "dataset/dataset.hpp"
 #include "dataset/simulation_models.cpp"
@@ -129,25 +129,24 @@ void simulation_optimizer() {
   fem1.ViewMesh(true, 0);
 
 
-  FEM fem2(element);
-  std::vector<unsigned int> indices_not_triangulated = fem1.GetIndicesNotTriangulated();
-  for (unsigned int i=0; i<vpts.size(); i++) {
-    auto it = std::find(indices_not_triangulated.begin(), indices_not_triangulated.end(), i);
-    if (it == indices_not_triangulated.end()) {
-      fem2.AddPoint(Eigen::Vector3d(vpts[i][0], vpts[i][1], vpts[i][2]));
-    }
-  }
-  fem2.SetTriangles(fem1.GetTriangles());
-  //bool ok = fem2.ClearNotTriangulated();
-  fem2.InitCloud();
-  fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
+  FEM fem2(fem1);
+
+  //FEM fem2(element);
+  //std::vector<Eigen::Vector3d> fem1_alive_points = fem1.GetPoints(true);
+  //for (unsigned int i=0; i<fem1_alive_points.size(); i++) {
+  //  fem2.AddPoint(Eigen::Vector3d(fem1_alive_points[i][0], fem1_alive_points[i][1], fem1_alive_points[i][2]));
+  //}
+  //fem2.SetTriangles(fem1.GetTriangles());
+  ////bool ok = fem2.ClearNotTriangulated();
+  //fem2.InitCloud();
+  //fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
   fem1.ViewMesh(true, fem2.GetCloud(), fem2.GetExtrusion(), fem2.GetPose(), 0);
 
-
+  return;
 
   std::cout << "\nTransform pose 2 for simulation, impose a rotation of x degrees around each axis" << std::endl;
-  POS pos(fem2.GetEigenNodes(), fem2.GetPose());
-  pos.SetTarget(fem1.GetEigenNodes());
+  POS pos(fem2.GetEigenNodes(true), fem2.GetPose());
+  pos.SetTarget(fem1.GetEigenNodes(true));
 
   double ang = 5*M_PI/180;
   Eigen::Vector3d axis(1,1,1);
@@ -162,11 +161,12 @@ void simulation_optimizer() {
 
   std::cout << "\nInitialize FEA object, use conectivity to compute stiffness matrix" << std::endl;
   FEA fea(element, 10000.0, 0.3, true);
-  std::vector<Eigen::Vector3d> nodes = fem1.GetEigenNodes();
+  std::vector<Eigen::Vector3d> nodes = fem1.GetEigenNodes(true);
   std::vector<std::vector<unsigned int>> elements = fem1.GetElements();
   fea.MatAssembly(nodes, elements);
 
 
+  return;
 
   std::cout << "\nSet Boundary Conditions" << std::endl;
   std::vector<unsigned int> bc_nodes = fem1.GetExtrusionIndices();
