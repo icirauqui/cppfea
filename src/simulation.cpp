@@ -33,7 +33,7 @@ void simulation_manual() {
 
   std::cout << "\nTriangulate and compute poses" << std::endl;
   fem1.Compute(true);
-  fem1.ComputeExtrusion();
+  //fem1.ComputeExtrusion();
   fem1.ViewMesh(true, 0);
   fem2.InitCloud();
   fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
@@ -115,8 +115,6 @@ void simulation_optimizer() {
   SimulationC3D8_1 ds(1);
   std::vector<Eigen::Vector3d> vpts = ds.GetNodes();
 
-
-  
   std::cout << "\nCreate FEM objects and add points" << std::endl;
   FEM fem1(element);
   for (unsigned int i=0; i<vpts.size(); i++) {
@@ -125,28 +123,23 @@ void simulation_optimizer() {
   
   std::cout << "\nTriangulate and compute poses" << std::endl;
   fem1.Compute(true, true);
-  fem1.ComputeExtrusion();
-  fem1.ViewMesh(true, 0);
+  //fem1.ComputeExtrusion();
+  //fem1.ViewMesh(true, 0);
+  fem1.ViewMesh(true, 0, {&fem1});
+
 
 
   FEM fem2(fem1);
+  //fem1.ViewMesh(true, fem2.GetCloud(), fem2.GetExtrusion(), fem2.GetPose(), 0);
+  fem1.ViewMesh(true, 0, {&fem1, &fem2});
 
-  //FEM fem2(element);
-  //std::vector<Eigen::Vector3d> fem1_alive_points = fem1.GetPoints(true);
-  //for (unsigned int i=0; i<fem1_alive_points.size(); i++) {
-  //  fem2.AddPoint(Eigen::Vector3d(fem1_alive_points[i][0], fem1_alive_points[i][1], fem1_alive_points[i][2]));
-  //}
-  //fem2.SetTriangles(fem1.GetTriangles());
-  ////bool ok = fem2.ClearNotTriangulated();
-  //fem2.InitCloud();
-  //fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
-  fem1.ViewMesh(true, fem2.GetCloud(), fem2.GetExtrusion(), fem2.GetPose(), 0);
-
-  //return;
 
   std::cout << "\nTransform pose 2 for simulation, impose a rotation of x degrees around each axis" << std::endl;
   POS pos(fem2.GetEigenNodes(true), fem2.GetPose());
   pos.SetTarget(fem1.GetEigenNodes(true));
+
+  POS pos2(fem2.GetEigenNodes(false), fem2.GetPose());
+  pos2.SetTarget(fem1.GetEigenNodes(false));
 
   double ang = 5*M_PI/180;
   Eigen::Vector3d axis(1,1,1);
@@ -154,15 +147,35 @@ void simulation_optimizer() {
   Eigen::Vector4d imposed_angle_q = pos.QuaternionFromAngleAxis(axis, ang);
   Eigen::Vector3d model_offset(1.0, 1.0, 1.0); 
   pos.Transform(imposed_angle_q, model_offset, 1.0);
-  //std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k0 = pos.GetPointLayers();
-  //fem1.ViewMesh(true, nodes_k0.first, nodes_k0.second, pose_k0, 0);
+  std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k0l = pos.GetPointLayers();
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k0l = pos.GetPose();
 
+  pos2.Transform(imposed_angle_q, model_offset, 1.0);
+
+  fem2.Transform(pos2.GetPointLayers(), pos2.GetPose());
+  std::cout << " A " << std::endl;
+  fem1.ViewMesh(true, 0, {&fem1, &fem2});
+  //fem1.ViewMesh(true, nodes_k0l.first, nodes_k0l.second, pos.GetPose(), 0);
+
+
+  return;
 
 
   std::cout << "\nInitialize FEA object, use conectivity to compute stiffness matrix" << std::endl;
   FEA fea(element, 10000.0, 0.3, true);
+  std::cout << " B " << std::endl;
+  fem1.ViewMesh(true, nodes_k0l.first, nodes_k0l.second, pose_k0l, 0);
   std::vector<Eigen::Vector3d> nodes = fem1.GetEigenNodes(true);
-  std::vector<std::vector<unsigned int>> elements = fem1.GetElements();
+  std::vector<std::vector<unsigned int>> elements = fem1.GetElements(true);
+
+  //for (unsigned int i=0; i<elements.size(); i++) {
+  //  for (unsigned int j=0; j<elements[i].size(); j++) {
+  //    std::cout << " " << elements[i][j];
+  //  }
+  //  std::cout << std::endl;
+  //}
+
+
   fea.MatAssembly(nodes, elements);
 
 
@@ -174,6 +187,9 @@ void simulation_optimizer() {
   bc.AddEncastreByNodeIds(bc_nodes);
   fea.ApplyBoundaryConditions(bc);
 
+
+  std::cout << " C " << std::endl;
+  fem1.ViewMesh(true, nodes_k0l.first, nodes_k0l.second, pose_k0l, 0);
 
 
 
@@ -200,6 +216,8 @@ void simulation_optimizer() {
   std::cout << " - Target Pose  = " << pose_k0.first.transpose() << " | " << pose_k0.second.transpose() << std::endl;
   fem1.ViewMesh(true, nodes_k1l.first, nodes_k1l.second, pose_k1, 0);
   
+  return;
+
 
   std::cout << "\nOptimize" << std::endl;
   std::pair<double, Eigen::VectorXd> res = lm.Optimize(pose_k1);

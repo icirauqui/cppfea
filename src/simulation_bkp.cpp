@@ -100,7 +100,7 @@ void test_fe(bool optimizer = false) {
   // 3. Triangulate andcompute poses.
   fem1.Compute(true);
   fem2.InitCloud();
-  fem1.ComputeExtrusion();
+  //fem1.ComputeExtrusion();
   fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
 
   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose1 = ApproximatePose(fem1.GetEigenNodes());
@@ -274,7 +274,7 @@ void eval_fea() {
 
   fem1.Compute(true);
   fem2.InitCloud();
-  fem1.ComputeExtrusion();
+  //fem1.ComputeExtrusion();
   fem2.SetExtrusion(fem1.GetExtrusionDelta(), fem1.GetElementHeight());
 
   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose1 = ApproximatePose(fem1.GetEigenNodes());

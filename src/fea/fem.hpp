@@ -68,7 +68,7 @@ public:
 
   bool Compute(bool moving_least_squares = true, bool simulation = false);
 
-  void ComputeExtrusion();
+  bool ComputeExtrusion();
   std::vector<Eigen::Vector3d> GetExtrusionDelta();
   std::vector<Eigen::Vector3d> GetExtrusion();
   std::vector<unsigned int> GetExtrusionIndices();
@@ -77,21 +77,28 @@ public:
   std::vector<unsigned int> GetIndicesNotTriangulated();
   std::vector<Eigen::Vector3d> GetPoints(bool alive_only = true);
 
+  void ViewMesh(bool extrusion,
+                int wait,
+                std::vector<FEM*> fems);
+
+  void AddMesh(bool extrusion,
+               FEM* fem,
+               pcl::visualization::PCLVisualizer viewer,
+               std::vector<double> colorf,
+               std::vector<double> colorb,
+               std::string fem_id);
 
   void ViewMesh(bool extrusion = false,
-                int wait = 0);
+                int wait = 0,
+                pcl::visualization::PCLVisualizer viewer = pcl::visualization::PCLVisualizer("3D Viewer"));
     
   void ViewMesh(bool extrusion = false,
-                std::vector<Eigen::Vector3d> cloud2 = std::vector<Eigen::Vector3d>(),
-                std::vector<Eigen::Vector3d> cloud2extrusion = std::vector<Eigen::Vector3d>(),
+                std::vector<Eigen::Vector3d> points2 = std::vector<Eigen::Vector3d>(),
+                std::vector<Eigen::Vector3d> points2extrusion = std::vector<Eigen::Vector3d>(),
                 std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2 = std::make_pair(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 0.0)),
-                int wait = 0);
+                int wait = 0,
+                pcl::visualization::PCLVisualizer viewer = pcl::visualization::PCLVisualizer("3D Viewer"));
 
-  void ViewMesh(bool extrusion = false,
-                pcl::PointCloud<pcl::PointXYZ> cloud2 = pcl::PointCloud<pcl::PointXYZ>(),
-                std::vector<Eigen::Vector3d> cloud2extrusion = std::vector<Eigen::Vector3d>(),
-                std::pair<Eigen::Vector4d, Eigen::Vector3d> pose2 = std::make_pair(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0), Eigen::Vector3d(0.0, 0.0, 0.0)),
-                int wait = 0);
 
   std::vector<std::vector<float>> GetNodes();
   std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true);
@@ -101,13 +108,15 @@ public:
   std::vector<std::vector<unsigned int>> GetTriangles();
   void SetTriangles(std::vector<std::vector<unsigned int>> triangles);
 
-  std::vector<std::vector<unsigned int>> GetElements();
+  std::vector<std::vector<unsigned int>> GetElements(bool alive_only = true);
   void SetElements(std::vector<std::vector<unsigned int>> elements);
 
   pcl::PointCloud<pcl::PointXYZ> GetCloud();
   pcl::PointCloud<pcl::PointXYZ> GetCloud2();
   std::pair<Eigen::Vector4d, Eigen::Vector3d> GetPose();
 
+  void Transform(std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes,
+                 std::pair<Eigen::Vector4d, Eigen::Vector3d> pose);
 
 
 
@@ -141,6 +150,8 @@ private:
   double element_height_ = 0.0;
 
   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_;
+
+  std::vector<std::vector<double>> colorsf_, colorsb_;
 
   // Interface 
   float mls_search_radius_ = 1.0;
