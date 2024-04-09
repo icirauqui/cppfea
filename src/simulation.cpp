@@ -116,30 +116,23 @@ void simulation_optimizer() {
   std::vector<Eigen::Vector3d> vpts = ds.GetNodes();
 
   std::cout << "\nCreate FEM objects and add points" << std::endl;
+  std::cout << " - Number of points = " << vpts.size() << std::endl;
   FEM fem1(element);
+  FEM fem2(element);
   for (unsigned int i=0; i<vpts.size(); i++) {
     fem1.AddPoint(Eigen::Vector3d(vpts[i][0], vpts[i][1], vpts[i][2]));
+    fem2.AddPoint(Eigen::Vector3d(vpts[i][0], vpts[i][1], vpts[i][2]));
   }  
   
   std::cout << "\nTriangulate and compute poses" << std::endl;
   fem1.Compute(true, true);
-  //fem1.ComputeExtrusion();
-  //fem1.ViewMesh(true, 0);
   fem1.ViewMesh(true, 0, {&fem1});
-
-
-
-  FEM fem2(fem1);
-  //fem1.ViewMesh(true, fem2.GetCloud(), fem2.GetExtrusion(), fem2.GetPose(), 0);
-  fem1.ViewMesh(true, 0, {&fem1, &fem2});
-
+  fem2.Replicate(fem1);
+  
 
   std::cout << "\nTransform pose 2 for simulation, impose a rotation of x degrees around each axis" << std::endl;
   POS pos(fem2.GetEigenNodes(true), fem2.GetPose());
   pos.SetTarget(fem1.GetEigenNodes(true));
-
-  POS pos2(fem2.GetEigenNodes(false), fem2.GetPose());
-  pos2.SetTarget(fem1.GetEigenNodes(false));
 
   double ang = 5*M_PI/180;
   Eigen::Vector3d axis(1,1,1);
@@ -150,12 +143,10 @@ void simulation_optimizer() {
   std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k0l = pos.GetPointLayers();
   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k0l = pos.GetPose();
 
-  pos2.Transform(imposed_angle_q, model_offset, 1.0);
-
-  fem2.Transform(pos2.GetPointLayers(), pos2.GetPose());
   std::cout << " A " << std::endl;
+  fem2.Transform(nodes_k0l, pose_k0l);
+  std::cout << " B " << std::endl;
   fem1.ViewMesh(true, 0, {&fem1, &fem2});
-  //fem1.ViewMesh(true, nodes_k0l.first, nodes_k0l.second, pos.GetPose(), 0);
 
 
   return;

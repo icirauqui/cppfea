@@ -46,6 +46,8 @@ public:
   FEM(std::string element);
   FEM(FEM& fem);
 
+  void Replicate(FEM& fem);
+
   void AddPoint(Eigen::Vector3d point);
 
   bool InitCloud();
@@ -73,6 +75,7 @@ public:
   std::vector<Eigen::Vector3d> GetExtrusion();
   std::vector<unsigned int> GetExtrusionIndices();
   void SetExtrusion(std::vector<Eigen::Vector3d> extrusion_delta, double element_height);
+  void SetAliveNodes(std::vector<bool> alive_nodes);
   double GetElementHeight();
   std::vector<unsigned int> GetIndicesNotTriangulated();
   std::vector<Eigen::Vector3d> GetPoints(bool alive_only = true);
@@ -81,12 +84,6 @@ public:
                 int wait,
                 std::vector<FEM*> fems);
 
-  void AddMesh(bool extrusion,
-               FEM* fem,
-               pcl::visualization::PCLVisualizer viewer,
-               std::vector<double> colorf,
-               std::vector<double> colorb,
-               std::string fem_id);
 
   void ViewMesh(bool extrusion = false,
                 int wait = 0,
@@ -104,6 +101,7 @@ public:
   std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true);
   std::vector<Eigen::Vector3d> GetEigenBaseNodes();
   std::vector<Eigen::Vector3d> GetEigenExtrudedNodes();
+  std::vector<bool> GetPointsAlive();
 
   std::vector<std::vector<unsigned int>> GetTriangles();
   void SetTriangles(std::vector<std::vector<unsigned int>> triangles);
