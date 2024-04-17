@@ -46,7 +46,7 @@ public:
   FEM(std::string element);
   FEM(FEM& fem);
 
-  void Replicate(FEM& fem);
+  void Replicate(FEM* fem);
 
   void AddPoint(Eigen::Vector3d point);
 
@@ -80,9 +80,7 @@ public:
   std::vector<unsigned int> GetIndicesNotTriangulated();
   std::vector<Eigen::Vector3d> GetPoints(bool alive_only = true);
 
-  void ViewMesh(bool extrusion,
-                int wait,
-                std::vector<FEM*> fems);
+
 
 
   void ViewMesh(bool extrusion = false,
@@ -98,7 +96,7 @@ public:
 
 
   std::vector<std::vector<float>> GetNodes();
-  std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true);
+  std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true, bool is_target = false);
   std::vector<Eigen::Vector3d> GetEigenBaseNodes();
   std::vector<Eigen::Vector3d> GetEigenExtrudedNodes();
   std::vector<bool> GetPointsAlive();
@@ -119,12 +117,12 @@ public:
 
 
 
+  std::pair<Eigen::Vector3d, Eigen::Vector3d> QuaternionLine(
+    Eigen::Vector4d qvec, Eigen::Vector3d point, double radius = 1.0);
 
 private:
 
   std::pair<Eigen::Vector3d, Eigen::Vector3d> QuaternionLine2(
-    Eigen::Vector4d qvec, Eigen::Vector3d point, double radius = 1.0);
-  std::pair<Eigen::Vector3d, Eigen::Vector3d> QuaternionLine(
     Eigen::Vector4d qvec, Eigen::Vector3d point, double radius = 1.0);
 
   std::string element_;
@@ -166,7 +164,9 @@ private:
 
 
 
-
+void ViewMesh(bool extrusion,
+              int wait,
+              std::vector<FEM*> fems);
 
 
 

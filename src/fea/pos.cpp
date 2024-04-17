@@ -134,6 +134,7 @@ std::vector<Eigen::Vector3d> POS::GetPoints(int idx) {
 std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> POS::GetPointLayers(int idx){
   std::vector<Eigen::Vector3d> points = GetPoints(idx);
   std::vector<Eigen::Vector3d> points_front, points_back;
+  std::cout << "Number of points to get layers: " << points.size() << std::endl;
   for (unsigned int i=0; i<points.size(); i++) {
     if (i < points.size()/2) {
       points_front.push_back(points[i]);

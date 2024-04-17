@@ -126,13 +126,14 @@ void simulation_optimizer() {
   
   std::cout << "\nTriangulate and compute poses" << std::endl;
   fem1.Compute(true, true);
-  fem1.ViewMesh(true, 0, {&fem1});
-  fem2.Replicate(fem1);
+  ViewMesh(true, 0, {&fem1});
+  fem2.Replicate(&fem1);
+  ViewMesh(true, 0, {&fem1, &fem2});
   
 
   std::cout << "\nTransform pose 2 for simulation, impose a rotation of x degrees around each axis" << std::endl;
   POS pos(fem2.GetEigenNodes(true), fem2.GetPose());
-  pos.SetTarget(fem1.GetEigenNodes(true));
+  pos.SetTarget(fem1.GetEigenNodes(true, true));
 
   double ang = 5*M_PI/180;
   Eigen::Vector3d axis(1,1,1);
@@ -146,10 +147,12 @@ void simulation_optimizer() {
   std::cout << " A " << std::endl;
   fem2.Transform(nodes_k0l, pose_k0l);
   std::cout << " B " << std::endl;
-  fem1.ViewMesh(true, 0, {&fem1, &fem2});
+  ViewMesh(true, 0, {&fem1, &fem2});
 
 
   return;
+
+  /*
 
 
   std::cout << "\nInitialize FEA object, use conectivity to compute stiffness matrix" << std::endl;
@@ -225,7 +228,7 @@ void simulation_optimizer() {
   std::cout << " - Final pose = " << pose_k2.first.transpose() << " " << pose_k2.second.transpose() << std::endl;
   fem1.ViewMesh(true, nodes_k2l.first, nodes_k2l.second, pose_k2, 0);
 
-
+*/
 
 }
 
