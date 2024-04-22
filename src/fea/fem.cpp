@@ -226,7 +226,7 @@ bool FEM::InitCloud() {
   return pc_.width > 0;
 }
 
-bool FEM::MovingLeastSquares() {
+bool FEM::MovingLeastSquares(bool simulation) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(
     new pcl::PointCloud<pcl::PointXYZ> (pc_));
 
@@ -270,10 +270,12 @@ bool FEM::MovingLeastSquares() {
   //std::cout << std::endl;
 
   // simulation: erase position 0 in mls_indices_
-  std::cout << "mls_points.size(): " << mls_points.size() << std::endl;
-  mls_indices_.erase(mls_indices_.begin() + 0);
-  mls_points.erase(mls_points.begin() + 0);
-  
+  if (simulation) {
+    std::cout << "mls_points.size(): " << mls_points.size() << std::endl;
+    mls_indices_.erase(mls_indices_.begin() + 0);
+    mls_points.erase(mls_points.begin() + 0);
+  }
+    
   std::vector<int> points_indices;
   int idxit = 0;
   for (unsigned int i = 0; i < points_indices_.size(); i++) {
@@ -284,19 +286,22 @@ bool FEM::MovingLeastSquares() {
       points_alive_[points_indices_[i]] = false;
     }
   }
-  points_indices_ = points_indices;
+    points_indices_ = points_indices;
 
-  // simulation
-  std::cout << "Simulation MLS:";
-  for (int i = 0; i<points_indices_.size(); i++) {
-    std::cout << " " << points_indices_[i];
+  if (simulation) {
+    // simulation
+    std::cout << "Simulation MLS:";
+    for (int i = 0; i<points_indices_.size(); i++) {
+      std::cout << " " << points_indices_[i];
+    }
+    std::cout << std::endl;
+    std::cout << "Simulation MLS:";
+    for (int i = 0; i<points_alive_.size(); i++) {
+      std::cout << " " << points_alive_[i];
+    }
+    std::cout << std::endl;
   }
-  std::cout << std::endl;
-  std::cout << "Simulation MLS:";
-  for (int i = 0; i<points_alive_.size(); i++) {
-    std::cout << " " << points_alive_[i];
-  }
-  std::cout << std::endl;
+
 
   // Replace pc_ with mls_points
   pc_.width = mls_points.size();
@@ -313,7 +318,7 @@ bool FEM::MovingLeastSquares() {
 }
 
 
-bool FEM::Triangulate() {
+bool FEM::Triangulate(bool simulation) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> (pc_));
 
   std::cout << "TRIANGULATE" << std::endl;
@@ -410,26 +415,27 @@ bool FEM::Triangulate() {
   }
 
   // simulation: remove the last triangle
-  std::cout << "Number of triangles: " << triangles_.size() << std::endl;
-  for (unsigned int i=0; i<3; i++) {
-    std::cout << " " << triangles_[triangles_.size() - 3][i];
+  if (simulation) {
+    std::cout << "Number of triangles: " << triangles_.size() << std::endl;
+    for (unsigned int i=0; i<3; i++) {
+      std::cout << " " << triangles_[triangles_.size() - 3][i];
+    }
+    std::cout << std::endl;
+    for (unsigned int i=0; i<3; i++) {
+      std::cout << " " << triangles_[triangles_.size() - 2][i];
+    }
+    std::cout << std::endl;
+    for (unsigned int i=0; i<3; i++) {
+      std::cout << " " << triangles_[triangles_.size() - 1][i];
+    }
+    std::cout << std::endl;
+    triangles_.erase(triangles_.end() - 1);
+    triangles_.erase(triangles_.end() - 1);
+    triangles_.erase(triangles_.end() - 1);
+    std::cout << "Number of triangles: " << triangles_.size() << std::endl;
   }
-  std::cout << std::endl;
-  for (unsigned int i=0; i<3; i++) {
-    std::cout << " " << triangles_[triangles_.size() - 2][i];
-  }
-  std::cout << std::endl;
-  for (unsigned int i=0; i<3; i++) {
-    std::cout << " " << triangles_[triangles_.size() - 1][i];
-  }
-  std::cout << std::endl;
-  triangles_.erase(triangles_.end() - 1);
-  triangles_.erase(triangles_.end() - 1);
-  triangles_.erase(triangles_.end() - 1);
-  std::cout << "Number of triangles: " << triangles_.size() << std::endl;
 
   // Update points_alive_ and points_indices_
-
   std::vector<unsigned int> triangle_indices;
   for (auto t: triangles_) {
     for (auto i: t) {
@@ -714,12 +720,12 @@ bool FEM::Compute(bool moving_least_squares, bool simulation) {
   }
 
   if (ok && moving_least_squares) {
-    ok = MovingLeastSquares();
+    ok = MovingLeastSquares(simulation);
     std::cout << " - MovingLeastSquares: " << ok << std::endl;
   }
 
   if (ok) {
-    ok = Triangulate();
+    ok = Triangulate(simulation);
     std::cout << " - Triangulate: " << ok << std::endl;
   }
 
@@ -796,9 +802,6 @@ bool FEM::ComputeExtrusion() {
     normal(i) = std::round(normal(i) * scale) / scale;
   }
   
-  //std::cout << "Element height: " << element_height_ << std::endl;
-
-
 
   int cloud_idx = 0;
   for (unsigned int i=0; i<points_.size(); i++) {
@@ -850,12 +853,15 @@ std::vector<Eigen::Vector3d> FEM::GetExtrusion() {
 std::vector<unsigned int> FEM::GetExtrusionIndices() {
   int points_alive = std::accumulate(points_alive_.begin(), points_alive_.end(), 0);
   std::vector<unsigned int> indices;
-  for (unsigned int i=0; i<points_.size(); i++) {
-    if (points_alive_[i]) {
-      int idx = indices.size() + points_alive;
-      indices.push_back(idx);
-    }
+  for (unsigned int i=0; i<points_alive; i++) {
+    indices.push_back(i + points_alive);
   }
+  //for (unsigned int i=0; i<points_.size(); i++) {
+  //  if (points_alive_[i]) {
+  //    int idx = indices.size() + points_alive;
+  //    indices.push_back(idx);
+  //  }
+  //}
   return indices;
 }
 
@@ -1198,7 +1204,8 @@ std::vector<std::vector<float>> FEM::GetNodes() {
   return points;
 }
 
-std::vector<Eigen::Vector3d> FEM::GetEigenNodes(bool active_only, bool is_target) {
+
+std::vector<Eigen::Vector3d> FEM::GetEigenNodesFront(bool active_only) {
   std::vector<Eigen::Vector3d> points;
   for (unsigned int i=0; i<points_.size(); i++) {
     if (active_only && !points_alive_[i]) {
@@ -1206,22 +1213,61 @@ std::vector<Eigen::Vector3d> FEM::GetEigenNodes(bool active_only, bool is_target
     }
     points.push_back(points_[i]);
   }
+  return points;
+}
 
-  int points_alive = std::accumulate(points_alive_.begin(), points_alive_.end(), 0);
-  std::cout << " - points_alive: " << points_alive << " / " << points_.size() << std::endl;
-  std::cout << " - points available in second layer: " << points2_.size() << std::endl;
 
+std::vector<Eigen::Vector3d> FEM::GetEigenNodes(bool active_only) {
+  std::vector<Eigen::Vector3d> points;
+  for (unsigned int i=0; i<points_.size(); i++) {
+    if (active_only && !points_alive_[i]) {
+      continue;
+    }
+    points.push_back(points_[i]);
+  }
   for (unsigned int i=0; i<points2_.size(); i++) {
-    if (is_target && active_only && !points_alive_[i]) {
+    if (active_only && !points_alive_[i] && points_.size() == points2_.size()) {
       continue;
     }
     points.push_back(points2_[i]);
   }
-
-  std::cout << " - Points extracted = " << points.size() << " / " << points_.size() + points2_.size() << std::endl;
-
   return points;
 }
+
+
+//std::vector<Eigen::Vector3d> FEM::GetEigenNodes(bool active_only, bool is_target) {
+//  std::vector<Eigen::Vector3d> points;
+//  for (unsigned int i=0; i<points_.size(); i++) {
+//    if (active_only && !points_alive_[i]) {
+//      continue;
+//    }
+//    points.push_back(points_[i]);
+//  }
+//
+//  int points_alive = std::accumulate(points_alive_.begin(), points_alive_.end(), 0);
+//
+//  if (!is_target) {
+//    for (unsigned int i=0; i<points2_.size(); i++) {
+//      if (active_only && !points_alive_[i]) {
+//        continue;
+//      }
+//      points.push_back(points2_[i]);
+//    }
+//  }
+//  //for (unsigned int i=0; i<points2_.size(); i++) {
+//  //  if (is_target && active_only && !points_alive_[i]) {
+//  //    continue;
+//  //  }
+//  //  points.push_back(points2_[i]);
+//  //}
+//
+//  std::cout << " - points alive / l1 / l2 / extracted / available: " << points_alive 
+//            << " / " << points_.size() << " / " << points2_.size() 
+//            << " / " << points.size() << " / " << points_.size() + points2_.size() 
+//            << std::endl;
+//
+//  return points;
+//}
 
 std::vector<Eigen::Vector3d> FEM::GetEigenBaseNodes() {
   return points_;
@@ -1248,7 +1294,7 @@ std::vector<std::vector<unsigned int>> FEM::GetElements(bool alive_only) {
     return elements_;
   }
 
-  std::cout << "points_indices: " << points_indices_.size() << std::endl;
+  std::cout << "points_indices (" << points_indices_.size() << "):";
   for (unsigned int i=0; i<points_indices_.size(); i++) {
     std::cout << " " << points_indices_[i];
   }
@@ -1265,14 +1311,14 @@ std::vector<std::vector<unsigned int>> FEM::GetElements(bool alive_only) {
 
     std::cout << " " << triangle_0 << "-" << triangle[0] << "-" <<
                         triangle_1 << "-" << triangle[1] << "-" <<
-                        triangle_2 << "-" << triangle[2] << "-" << std::endl;
+                        triangle_2 << "-" << triangle[2] << std::endl;
 
-    element.push_back(triangle_0 + points_alive);
-    element.push_back(triangle_1 + points_alive);
-    element.push_back(triangle_2 + points_alive);
-    element.push_back(triangle_0);
-    element.push_back(triangle_1);
-    element.push_back(triangle_2);
+    element.push_back(triangle[0] + points_alive);
+    element.push_back(triangle[1] + points_alive);
+    element.push_back(triangle[2] + points_alive);
+    element.push_back(triangle[0]);
+    element.push_back(triangle[1]);
+    element.push_back(triangle[2]);
     
     elements.push_back(element);
   }
@@ -1301,10 +1347,8 @@ std::pair<Eigen::Vector4d, Eigen::Vector3d> FEM::GetPose() {
 void FEM::Transform(std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes,
                     std::pair<Eigen::Vector4d, Eigen::Vector3d> pose) {
 
-  std::cout << "Nodes size == points size: "  << nodes.first.size()  << " - " << points_.size() << std::endl;
-  std::cout << "Nodes size == points2 size: " << nodes.second.size() << " - " << points2_.size() << std::endl;
-  std::cout << "pc_.points size: " << pc_.points.size() << std::endl;
-  std::cout << "pc2_.points size: " << pc2_.points.size() << std::endl;
+  std::cout << "Size pc_/points_/nodes.first :    "  << pc_.points.size() << " / " << points_.size() << " / " << nodes.first.size() << std::endl;
+  std::cout << "Size pc2_/points2_/nodes.second : "  << pc2_.points.size() << " / " << points2_.size() << " / " << nodes.second.size() << std::endl;
 
   if (nodes.first.size() == points_.size()) {
     for (unsigned int i=0; i<points_.size(); i++) {
@@ -1416,7 +1460,6 @@ void ViewMesh(bool extrusion,
   colorsb.push_back({0.9, 0.7, 0.7});
   colorsb.push_back({0.7, 0.7, 0.9});
 
-  std::cout << std::endl << "ViewMesh: " << fems.size() << " models" << std::endl;
   for (unsigned int f=0; f<fems.size(); f++) {
 
     FEM* fem = fems[f];
@@ -1425,6 +1468,13 @@ void ViewMesh(bool extrusion,
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudb(new pcl::PointCloud<pcl::PointXYZ> (fem->GetCloud2()));
     std::vector<std::vector<unsigned int>> triangles = fem->GetTriangles();
     std::pair<Eigen::Vector4d, Eigen::Vector3d> pose = fem->GetPose();
+
+    // add point cloud
+    //viewer.addPointCloud(cloudf);
+    //viewer.addPointCloud(cloudb);
+    //viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2);
+    //viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 0.0);
+
     
     for (unsigned int i=0; i<triangles.size(); i++) {
       pcl::PointXYZ p0 = cloudf->points[triangles[i][0]];
@@ -1463,7 +1513,6 @@ void ViewMesh(bool extrusion,
 
     // If pose_ not zero, then add as a thick point
     if (pose.second.norm() > 0) {
-      std::cout << "Pose: " << pose.second(0) << " " << pose.second(1) << " " << pose.second(2) << std::endl;
       pcl::PointXYZ p1(pose.second(0), pose.second(1), pose.second(2));
       viewer.addSphere(p1, 0.1, colorsf[f][0], colorsf[f][1], colorsf[f][2], "pose_" + std::to_string(f));
 

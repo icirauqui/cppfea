@@ -52,9 +52,9 @@ public:
 
   bool InitCloud();
 
-  bool MovingLeastSquares();
+  bool MovingLeastSquares(bool simulation = false);
   
-  bool Triangulate();
+  bool Triangulate(bool simulation = false);
 
   void SimulateFailedTriangulation();
 
@@ -96,7 +96,9 @@ public:
 
 
   std::vector<std::vector<float>> GetNodes();
-  std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true, bool is_target = false);
+  std::vector<Eigen::Vector3d> GetEigenNodesFront(bool active_only = true);
+  std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true);
+  //std::vector<Eigen::Vector3d> GetEigenNodes(bool active_only = true, bool is_target = false);
   std::vector<Eigen::Vector3d> GetEigenBaseNodes();
   std::vector<Eigen::Vector3d> GetEigenExtrudedNodes();
   std::vector<bool> GetPointsAlive();

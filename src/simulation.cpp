@@ -133,59 +133,41 @@ void simulation_optimizer() {
 
   std::cout << "\nTransform pose 2 for simulation, impose a rotation of x degrees around each axis" << std::endl;
   POS pos(fem2.GetEigenNodes(true), fem2.GetPose());
-  pos.SetTarget(fem1.GetEigenNodes(true, true));
+  pos.SetTarget(fem1.GetEigenNodes(true));
 
-  double ang = 5*M_PI/180;
+  double ang = 10*M_PI/180;
   Eigen::Vector3d axis(1,1,1);
-
   Eigen::Vector4d imposed_angle_q = pos.QuaternionFromAngleAxis(axis, ang);
   Eigen::Vector3d model_offset(1.0, 1.0, 1.0); 
+
   pos.Transform(imposed_angle_q, model_offset, 1.0);
   std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k0l = pos.GetPointLayers();
   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k0l = pos.GetPose();
-
-  std::cout << " A " << std::endl;
   fem2.Transform(nodes_k0l, pose_k0l);
-  std::cout << " B " << std::endl;
   ViewMesh(true, 0, {&fem1, &fem2});
 
+  
 
-  return;
-
-  /*
 
 
   std::cout << "\nInitialize FEA object, use conectivity to compute stiffness matrix" << std::endl;
   FEA fea(element, 10000.0, 0.3, true);
-  std::cout << " B " << std::endl;
-  fem1.ViewMesh(true, nodes_k0l.first, nodes_k0l.second, pose_k0l, 0);
   std::vector<Eigen::Vector3d> nodes = fem1.GetEigenNodes(true);
   std::vector<std::vector<unsigned int>> elements = fem1.GetElements(true);
-
-  //for (unsigned int i=0; i<elements.size(); i++) {
-  //  for (unsigned int j=0; j<elements[i].size(); j++) {
-  //    std::cout << " " << elements[i][j];
-  //  }
-  //  std::cout << std::endl;
-  //}
-
-
   fea.MatAssembly(nodes, elements);
 
 
-  //return;
-
   std::cout << "\nSet Boundary Conditions" << std::endl;
   std::vector<unsigned int> bc_nodes = fem1.GetExtrusionIndices();
+  for (unsigned int i=0; i< bc_nodes.size(); i++) {
+    std::cout << " " << bc_nodes[i];
+  }
+  std::cout << std::endl;
   BoundaryConditions3d bc(fea.NumDof(), &nodes);
   bc.AddEncastreByNodeIds(bc_nodes);
   fea.ApplyBoundaryConditions(bc);
 
-
   std::cout << " C " << std::endl;
-  fem1.ViewMesh(true, nodes_k0l.first, nodes_k0l.second, pose_k0l, 0);
-
-
 
 
 
@@ -208,10 +190,7 @@ void simulation_optimizer() {
   std::cout << " - Initial Strain energy = " << sE1 << std::endl;
   std::cout << " - Initial Pose = " << pose_k1.first.transpose() << " | " << pose_k1.second.transpose() << std::endl;
   std::cout << " - Target Pose  = " << pose_k0.first.transpose() << " | " << pose_k0.second.transpose() << std::endl;
-  fem1.ViewMesh(true, nodes_k1l.first, nodes_k1l.second, pose_k1, 0);
   
-  return;
-
 
   std::cout << "\nOptimize" << std::endl;
   std::pair<double, Eigen::VectorXd> res = lm.Optimize(pose_k1);
@@ -221,14 +200,15 @@ void simulation_optimizer() {
   std::vector<Eigen::Vector3d> nodes_k2 = pos.GetPoints();
   double sE2 = fea.ComputeStrainEnergy(nodes_k0, nodes_k2);
   std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k2 = pos.GetPose();
-  std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k2l = pos.GetPointLayers();
 
   std::cout << std::endl;
   std::cout << " - Final Strain Energy = " << sE2 << std::endl;
   std::cout << " - Final pose = " << pose_k2.first.transpose() << " " << pose_k2.second.transpose() << std::endl;
-  fem1.ViewMesh(true, nodes_k2l.first, nodes_k2l.second, pose_k2, 0);
 
-*/
+  std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k2l = pos.GetPointLayers();
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k2l = pos.GetPose();
+  fem2.Transform(nodes_k2l, pose_k2l);
+  ViewMesh(true, 0, {&fem1, &fem2});
 
 }
 
