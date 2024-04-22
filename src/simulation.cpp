@@ -125,7 +125,7 @@ void simulation_optimizer() {
   }  
   
   std::cout << "\nTriangulate and compute poses" << std::endl;
-  fem1.Compute(true, true);
+  fem1.Compute(true, false);
   ViewMesh(true, 0, {&fem1});
   fem2.Replicate(&fem1);
   ViewMesh(true, 0, {&fem1, &fem2});
