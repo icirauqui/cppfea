@@ -159,15 +159,14 @@ void simulation_optimizer() {
 
   std::cout << "\nSet Boundary Conditions" << std::endl;
   std::vector<unsigned int> bc_nodes = fem1.GetExtrusionIndices();
-  for (unsigned int i=0; i< bc_nodes.size(); i++) {
-    std::cout << " " << bc_nodes[i];
-  }
-  std::cout << std::endl;
+  //for (unsigned int i=0; i< bc_nodes.size(); i++) {
+  //  std::cout << " " << bc_nodes[i];
+  //}
+  //std::cout << std::endl;
   BoundaryConditions3d bc(fea.NumDof(), &nodes);
   bc.AddEncastreByNodeIds(bc_nodes);
   fea.ApplyBoundaryConditions(bc);
 
-  std::cout << " C " << std::endl;
 
 
 

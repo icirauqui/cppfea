@@ -71,28 +71,27 @@ std::pair<double, Eigen::VectorXd> LevenbergMarquardt::Optimize(
   // set lambda to max value of the Jacobian
   //lambda_ = jacobian_init.maxCoeff();
 
-  std::cout << "   Levenberg-Marquardt: Initialization | Residual = " << residual_ << std::endl;
-  std::cout << "      Lambda = " << lambda_ << std::endl;
+  std::cout << "   Levenberg-Marquardt: Initialization (lambda = " << lambda_ << ") | Residual = " << residual_ << std::endl;
 
   Eigen::MatrixXd I = Eigen::MatrixXd::Identity(params0.size(), params0.size());
   bool converged = false;
   int iterations = 0;
 
   while (!converged && iterations < max_iterations_) {
-    std::cout << "   Levenberg-Marquardt: Iteration " << iterations+1 << std::endl;
+    //std::cout << "   Levenberg-Marquardt: Iteration " << iterations+1 << std::endl;
 
     Eigen::VectorXd jacobian = ComputeJacobian(params0, residual_, 0.0000001);
-    std::cout << "      Jacobian = " << jacobian.transpose() << std::endl;
+    //std::cout << "      Jacobian = " << jacobian.transpose() << std::endl;
     Eigen::MatrixXd H = jacobian * jacobian.transpose();
     //std::cout << "      Hessian = " << H << std::endl;
     Eigen::VectorXd g = jacobian * residual_;
-    std::cout << "      Gradient = " << g.transpose() << std::endl;
+    //std::cout << "      Gradient = " << g.transpose() << std::endl;
 
     Eigen::VectorXd delta = (H + lambda_ * I).ldlt().solve(-g);
-    std::cout << "      Delta = " << delta.transpose() << std::endl;
+    //std::cout << "      Delta = " << delta.transpose() << std::endl;
     Eigen::VectorXd params1 = params0 + delta;
     double residual1 = ComputeResidual(params1);
-    std::cout << "      residual1 = " << residual1 << std::endl;
+    //std::cout << "      residual1 = " << residual1 << std::endl;
 
     if (residual1 < residual_) {
       lambda_ /= damping_factor_;
@@ -106,7 +105,9 @@ std::pair<double, Eigen::VectorXd> LevenbergMarquardt::Optimize(
       converged = true;
     }
 
-    std::cout << "      Residual = " << residual_ << std::endl;
+    //std::cout << "      Residual = " << residual_ << std::endl;
+
+    std::cout << "   Levenberg-Marquardt: Iteration " << iterations+1 << ": " << residual_ << std::endl;
 
     iterations++;
   }
