@@ -190,11 +190,8 @@ void simulation_optimizer() {
   std::cout << " - Initial Pose = " << pose_k1.first.transpose() << " | " << pose_k1.second.transpose() << std::endl;
   std::cout << " - Target Pose  = " << pose_k0.first.transpose() << " | " << pose_k0.second.transpose() << std::endl;
   
-
   std::cout << "\nOptimize" << std::endl;
   std::pair<double, Eigen::VectorXd> res = lm.Optimize(pose_k1);
-  //std::pair<double, Eigen::VectorXd> res = lm.OptimizeCLM(pose_k1);
-
 
   std::vector<Eigen::Vector3d> nodes_k2 = pos.GetPoints();
   double sE2 = fea.ComputeStrainEnergy(nodes_k0, nodes_k2);

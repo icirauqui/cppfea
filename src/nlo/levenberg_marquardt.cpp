@@ -60,16 +60,22 @@ std::pair<double, Eigen::VectorXd> LevenbergMarquardt::Optimize(
   residual_ = ComputeResidual(params0);
   double jacobian_grad = 1 / residual_;
 
-  // Initialize lambda
+  // Initialize lambda with the initial Jacobian, using the gradient of the residual
   Eigen::VectorXd jacobian_init = ComputeJacobian(params0, residual_, jacobian_grad);
-  //std::cout << "   Jacobian Init = " << jacobian_init.transpose() << std::endl;
-  //std::cout << "   Jacobian Grad = " << jacobian_grad << std::endl;
   if (lambda_ < 0.0) {
     lambda_ = InitializeLambda(jacobian_init, residual_);
   }
 
-  // set lambda to max value of the Jacobian
-  //lambda_ = jacobian_init.maxCoeff();
+  // If gradient of the residual results in a zero lambda, recalculate the Jacobian with a predefined epsilon
+  if (lambda_ == 0.0) {
+    jacobian_init = ComputeJacobian(params0, residual_);
+    lambda_ = InitializeLambda(jacobian_init, residual_);
+  }
+
+  // if lambda is still zero, set lambda to max value of the Jacobian
+  if (lambda_ == 0.0) {
+    lambda_ = jacobian_init.maxCoeff();
+  }
 
   std::cout << "   Levenberg-Marquardt: Initialization (lambda = " << lambda_ << ") | Residual = " << residual_ << std::endl;
 
