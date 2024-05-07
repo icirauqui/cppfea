@@ -112,6 +112,7 @@ public:
   pcl::PointCloud<pcl::PointXYZ> GetCloud();
   pcl::PointCloud<pcl::PointXYZ> GetCloud2();
   std::pair<Eigen::Vector4d, Eigen::Vector3d> GetPose();
+  void SetPose(std::pair<Eigen::Vector4d, Eigen::Vector3d> pose);
 
   void Transform(std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes,
                  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose);

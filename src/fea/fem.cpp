@@ -1344,6 +1344,10 @@ std::pair<Eigen::Vector4d, Eigen::Vector3d> FEM::GetPose() {
   return pose_;
 }
 
+void FEM::SetPose(std::pair<Eigen::Vector4d, Eigen::Vector3d> pose) {
+  pose_ = pose;
+}
+
 
 void FEM::Transform(std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes,
                     std::pair<Eigen::Vector4d, Eigen::Vector3d> pose) {
