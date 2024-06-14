@@ -90,6 +90,7 @@
         "expected": "cpp",
         "spanstream": "cpp",
         "stacktrace": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "dense": "cpp"
     }
 }

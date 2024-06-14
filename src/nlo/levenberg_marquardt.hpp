@@ -5,18 +5,10 @@
 #include "../fea/fea.hpp"
 #include "../fea/pos.hpp"
 
-//#include "node.hpp"
-//#include "edge.hpp"
-
-#include <mrpt/math/CLevenbergMarquardt.h>
-#include <mrpt/system/CTicTac.h>
 
 #include <cmath>
 #include <iostream>
 
-//using namespace mrpt;
-//using namespace mrpt::math;
-//using namespace mrpt::system;
 
 
 class LevenbergMarquardt 
@@ -31,14 +23,6 @@ public:
 
   std::pair<double, Eigen::VectorXd> Optimize(
     const std::pair<Eigen::Matrix<double, 4, 1>, Eigen::Matrix<double, 3, 1> > params_in);
-  std::pair<double, Eigen::VectorXd> OptimizeCLM(
-    const std::pair<Eigen::Matrix<double, 4, 1>, Eigen::Matrix<double, 3, 1> > params_in);
-  std::pair<double, Eigen::VectorXd> OptimizeCLM(const Eigen::VectorXd params0);
-
-
-  void ComputeResidual(const mrpt::math::CVectorDouble& x, 
-                       const mrpt::math::CVectorDouble& y, 
-                       mrpt::math::CVectorDouble& out_f);
 
   double ComputeResidual(const Eigen::VectorXd& pose);
 
