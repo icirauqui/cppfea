@@ -18,7 +18,8 @@ int main(int argc, char** argv) {
   //test_c2d4_loads();
 
   //simulation_manual();
-  simulation_optimizer();
+  //simulation_optimizer();
+  mesmeld_test_01();
 
 
 

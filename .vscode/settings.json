@@ -91,6 +91,8 @@
         "spanstream": "cpp",
         "stacktrace": "cpp",
         "core": "cpp",
-        "dense": "cpp"
+        "dense": "cpp",
+        "format": "cpp",
+        "stdfloat": "cpp"
     }
 }

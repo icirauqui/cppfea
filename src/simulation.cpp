@@ -209,3 +209,105 @@ void simulation_optimizer() {
 }
 
 
+
+void mesmeld_test_01() {
+  std::cout << "Simulation with MeshMeld data" << std::endl;
+  std::string element = "C3D6";
+
+
+
+  std::cout << "\nLoad Data" << std::endl;
+  SimulationMeshmeld01 ds("../data/meshmeld01/nodes_k0.txt", "../data/meshmeld01/nodes_k1.txt");
+  
+  std::vector<Eigen::Vector3d> vpts0 = ds.GetNodes0();
+  std::vector<Eigen::Vector3d> vpts1 = ds.GetNodes1();
+
+  std::cout << "\nCreate FEM objects and add points" << std::endl;
+  std::cout << " - Number of points = " << vpts0.size() << std::endl;
+  FEM fem1(element);
+  FEM fem2(element);
+  FEM fem1bis(element);
+  for (unsigned int i=0; i<vpts0.size()/2; i++) {
+    fem1.AddPoint(Eigen::Vector3d(vpts0[i][0], vpts0[i][1], vpts0[i][2]));
+    fem2.AddPoint(Eigen::Vector3d(vpts1[i][0], vpts1[i][1], vpts1[i][2]));
+    fem1bis.AddPoint(Eigen::Vector3d(vpts0[i][0], vpts0[i][1], vpts0[i][2]));
+  }  
+  
+  std::cout << "\nTriangulate and compute poses" << std::endl;
+  fem1.Compute(true, true, false);
+  fem1bis.Compute(false, false, false);
+  ViewMesh(false, 0, {&fem1, &fem1bis});
+  //ViewMesh(true, 0, {&fem1});
+  fem2.Replicate(&fem1);
+  //ViewMesh(true, 0, {&fem1, &fem2});
+  
+
+  std::cout << "\nTransform pose 2 for simulation, impose a rotation of x degrees around each axis" << std::endl;
+  POS pos(fem2.GetEigenNodes(true), fem2.GetPose());
+  pos.SetTarget(fem1.GetEigenNodes(true));
+
+
+
+
+  std::cout << "\nInitialize FEA object, use conectivity to compute stiffness matrix" << std::endl;
+  FEA fea(element, 10000.0, 0.3, true);
+  std::vector<Eigen::Vector3d> nodes = fem1.GetEigenNodes(true);
+  std::vector<std::vector<unsigned int>> elements = fem1.GetElements(true);
+  fea.MatAssembly(nodes, elements);
+
+
+  std::cout << "\nSet Boundary Conditions" << std::endl;
+  std::vector<unsigned int> bc_nodes = fem1.GetExtrusionIndices();
+  //for (unsigned int i=0; i< bc_nodes.size(); i++) {
+  //  std::cout << " " << bc_nodes[i];
+  //}
+  //std::cout << std::endl;
+  BoundaryConditions3d bc(fea.NumDof(), &nodes);
+  bc.AddEncastreByNodeIds(bc_nodes);
+  fea.ApplyBoundaryConditions(bc);
+
+
+
+
+  fea.ExportK("../data/meshmeld01/K.txt");
+  //fea.ExportF("../data/meshmeld01/F.txt");
+  //fea.ExportU("../data/meshmeld01/U.txt");
+
+
+  
+  std::cout << "\nInitialize Optimizer" << std::endl;
+  LevenbergMarquardt lm(&pos, &fea, 10000, -1.0, 2.0, 0.000001);
+
+  std::vector<Eigen::Vector3d> nodes_k0 = pos.GetTarget();
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k0 = fem1.GetPose();
+
+  std::vector<Eigen::Vector3d> nodes_k1 = pos.GetPoints();
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k1 = pos.GetPose();
+
+  double sE1 = fea.ComputeStrainEnergy(nodes_k0, nodes_k1);
+  std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k1l = pos.GetPointLayers();
+
+  std::cout << " - Initial Strain energy = " << sE1 << std::endl;
+  std::cout << " - Initial Pose = " << pose_k1.first.transpose() << " | " << pose_k1.second.transpose() << std::endl;
+  std::cout << " - Target Pose  = " << pose_k0.first.transpose() << " | " << pose_k0.second.transpose() << std::endl;
+  return;
+  
+  std::cout << "\nOptimize" << std::endl;
+  std::pair<double, Eigen::VectorXd> res = lm.Optimize(pose_k1);
+
+  std::vector<Eigen::Vector3d> nodes_k2 = pos.GetPoints();
+  double sE2 = fea.ComputeStrainEnergy(nodes_k0, nodes_k2);
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k2 = pos.GetPose();
+
+  std::cout << std::endl;
+  std::cout << " - Final Strain Energy = " << sE2 << std::endl;
+  std::cout << " - Final pose = " << pose_k2.first.transpose() << " " << pose_k2.second.transpose() << std::endl;
+
+  std::pair<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3d>> nodes_k2l = pos.GetPointLayers();
+  std::pair<Eigen::Vector4d, Eigen::Vector3d> pose_k2l = pos.GetPose();
+  fem2.Transform(nodes_k2l, pose_k2l);
+  ViewMesh(true, 0, {&fem1, &fem2});
+
+}
+
+

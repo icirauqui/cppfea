@@ -236,16 +236,35 @@ bool FEM::MovingLeastSquares(bool simulation) {
   // Init object (second point type is for the normals, even if unused)
   pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
  
-  mls.setComputeNormals (true);
-
-  // Set parameters
+  mls.setComputeNormals(true);
   mls.setInputCloud (cloud);
-  mls.setPolynomialOrder (2);
-  mls.setSearchMethod (tree);
-  mls.setSearchRadius (2);
 
-  // Reconstruct
-  mls.process (mls_points);
+
+  int mls_attempts = 0;
+  double search_radious = 0.1;
+  
+  while (mls_attempts < 10) {
+    // Set parameters
+    mls.setPolynomialOrder (5);
+    mls.setSearchMethod (tree);
+    mls.setSearchRadius (search_radious);
+    //mls.setUpsamplingMethod (pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal>::NONE);
+    //mls.setUpsamplingRadius (search_radious);
+    //mls.setUpsamplingStepSize (10);
+    // Reconstruct
+    mls.process (mls_points);
+
+    if (mls_points.size() >= 0.5 * pc_.points.size()) {
+      break;
+    } else {
+      mls_attempts++;
+      search_radious *= 2.0;
+      mls_points.clear();
+      std::cout << "   MLS failed, trying again with search radius: " << search_radious << std::endl;
+    }
+  }
+
+
 
   if (mls_points.size() == 0) {
     std::cout << "   MLS failed" << std::endl;
@@ -298,6 +317,8 @@ bool FEM::MovingLeastSquares(bool simulation) {
     }
     std::cout << std::endl;
   }
+
+  std::cout << "   Point Cloud size: " << pc_.points.size() << " -> " << mls_points.size() << std::endl;
 
 
   // Replace pc_ with mls_points
@@ -367,6 +388,242 @@ bool FEM::Triangulate(bool simulation) {
   gp3.setInputCloud (cloud_with_normals);
   gp3.setSearchMethod (tree2);
   gp3.reconstruct (mesh_);
+
+  // Additional vertex information
+  // To which part (cloud) does each vertex belong
+  std::vector<int> parts = gp3.getPartIDs();
+  // Whether the vertex status is [-1,0,1,2,3] = [NONE,FREE,FRINGE,BOUNDARY,COMPLETED]
+  std::vector<int> states = gp3.getPointStates();
+
+  // Get largest part
+  std::unordered_map<int, int> map;
+  int max_val = -1;
+  int max_key = -1;
+  for (unsigned int i=0; i<parts.size(); i++) {
+    if (map.find(parts[i]) == map.end()) {
+      map[parts[i]] = 1;
+      if (max_val < 1) {
+        max_val = 1;
+        max_key = parts[i];
+      }
+    }
+    else {
+      map[parts[i]]++;
+      if (map[parts[i]] > max_val) {
+        max_val = map[parts[i]];
+        max_key = parts[i];
+      }
+    }
+  }
+
+  // Get triangles of largest part only
+  triangles_.clear();
+  for (unsigned int i=0; i<mesh_.polygons.size(); i++) {
+    unsigned int nver0 = mesh_.polygons[i].vertices[0];
+    unsigned int nver1 = mesh_.polygons[i].vertices[1];
+    unsigned int nver2 = mesh_.polygons[i].vertices[2];
+
+    if (parts[nver0] == max_key && parts[nver1] == max_key && parts[nver2] == max_key) {
+      std::vector<unsigned int> triangle;
+      triangle.push_back(nver0);
+      triangle.push_back(nver1);
+      triangle.push_back(nver2);
+      triangles_.push_back(triangle);
+    }
+  }
+
+  // simulation: remove the last triangle
+  if (simulation) {
+    std::cout << "   Number of triangles: " << triangles_.size() << std::endl;
+    for (unsigned int i=0; i<3; i++) {
+      std::cout << " " << triangles_[triangles_.size() - 3][i];
+    }
+    std::cout << std::endl;
+    for (unsigned int i=0; i<3; i++) {
+      std::cout << " " << triangles_[triangles_.size() - 2][i];
+    }
+    std::cout << std::endl;
+    for (unsigned int i=0; i<3; i++) {
+      std::cout << " " << triangles_[triangles_.size() - 1][i];
+    }
+    std::cout << std::endl;
+    triangles_.erase(triangles_.end() - 1);
+    triangles_.erase(triangles_.end() - 1);
+    triangles_.erase(triangles_.end() - 1);
+    std::cout << "   Number of triangles: " << triangles_.size() << std::endl;
+  }
+
+  // Update points_alive_ and points_indices_
+  std::vector<unsigned int> triangle_indices;
+  for (auto t: triangles_) {
+    for (auto i: t) {
+      auto it = std::find(triangle_indices.begin(), triangle_indices.end(), i);
+      if (it == triangle_indices.end()) {
+        triangle_indices.push_back(i);
+      }
+    }
+  }
+
+  // sort ascending triangle_indices
+  std::sort(triangle_indices.begin(), triangle_indices.end());
+
+  //for (unsigned int i=0; i<triangle_indices.size(); i++) {
+  //  std::cout << " " << triangle_indices[i];
+  //}
+  //std::cout << std::endl;
+
+
+
+  std::vector<int> missing_indices, points_indices, points_indices_internal;
+  int internal_idx = 0;
+  for (unsigned int i=0; i<pc_.points.size(); i++) {
+    auto it = std::find(triangle_indices.begin(), triangle_indices.end(), i);
+    if (it == triangle_indices.end()) {
+      missing_indices.push_back(i);
+      points_alive_[points_indices_[i]] = false;
+      points_indices_internal.push_back(-1);
+    } else {
+      points_indices.push_back(points_indices_[i]);
+      points_indices_internal.push_back(internal_idx);
+      internal_idx++;
+    }
+  }
+
+  //std::cout << "Missing indices: ";
+  //for (unsigned int i=0; i<missing_indices.size(); i++) {
+  //  std::cout << " " << missing_indices[i];
+  //}
+  //std::cout << std::endl;
+
+  //std::cout << "Points indices: ";
+  //for (unsigned int i=0; i<points_indices.size(); i++) {
+  //  std::cout << " " << points_indices[i];
+  //}
+  //std::cout << std::endl;
+
+  //std::cout << "Triangulation: ";
+  //for (unsigned int i=0; i<points_alive_.size(); i++) {
+  //  std::cout << " " << points_alive_[i];
+  //}
+  //std::cout << std::endl;
+  std::cout << "   Number of indices / points: " << points_indices.size() << " / " << points_.size() << std::endl;
+  std::cout << "   Number of triangles: " << triangles_.size() << std::endl;
+
+  points_indices_ = points_indices;
+
+  // Replace pc_ with triangulated points
+  pc_.width = points_indices_.size();
+  pc_.height = 1;
+  pc_.points.resize(pc_.width * pc_.height);
+
+  for (size_t i = 0; i < pc_.points.size(); ++i) {
+    pc_.points[i].x = points_[points_indices_[i]](0);
+    pc_.points[i].y = points_[points_indices_[i]](1);
+    pc_.points[i].z = points_[points_indices_[i]](2);
+  }
+
+  // Finally update triangles_ with internal indices
+  for (unsigned int i=0; i<triangles_.size(); i++) {
+    for (unsigned int j=0; j<triangles_[i].size(); j++) {
+      triangles_[i][j] = points_indices_internal[triangles_[i][j]];
+    }
+  }
+
+  //std::cout << "pc_.points.size() = " << pc_.points.size() << std::endl;
+
+
+  
+  return triangles_.size() > 0 ? true : false;
+}
+
+
+
+bool FEM::TriangulateByProjection(bool simulation) {
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ> (pc_));
+
+
+  // Use pose_ to project points_ onto a plane
+  // pose is composed of (Eigen::Vector4d, Eigen::Vector3d) -> rotation quaternion and translation vector
+  pcl::PointCloud<pcl::PointXYZ>::Ptr projected_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+  Eigen::Vector4d pose_q = pose_.first;
+  Eigen::Quaterniond q(pose_q(0), pose_q(1), pose_q(2), pose_q(3));
+  Eigen::Matrix3d rotation_matrix = q.toRotationMatrix();
+  Eigen::Vector3d translation = pose_.second;
+
+  for (unsigned int i=0; i<pc_.points.size(); i++) {
+    Eigen::Vector3d point(pc_.points[i].x, pc_.points[i].y, pc_.points[i].z);
+    Eigen::Vector3d projected_point = rotation_matrix * point + translation;
+    double scale = 1.0 / projected_point(2);
+    projected_point *= scale;
+
+    projected_cloud->points.push_back(pcl::PointXYZ(projected_point(0), projected_point(1), projected_point(2)));
+  }
+
+
+  // Normal estimation
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+  pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+  tree->setInputCloud (cloud);
+  n.setInputCloud(cloud);
+  n.setSearchMethod(tree);
+  n.setKSearch(20);
+  n.compute(*normals);
+
+  // Store normals in normals_ as Eigen::Vector3d
+  normals_.clear();
+  for (unsigned int i = 0; i < normals->size(); i++) {
+    Eigen::Vector3d normal;
+    normal << normals->points[i].normal_x,
+              normals->points[i].normal_y,
+              normals->points[i].normal_z;
+    normals_.push_back(normal);
+  }
+
+
+  // Recalculate with projected points, but don't save normals
+  tree->setInputCloud (projected_cloud);
+  n.setInputCloud(projected_cloud);
+  n.setSearchMethod(tree);
+  n.setKSearch(20);
+  n.compute(*normals);
+
+
+
+
+
+  // Concatenate the XYZ and normal fields*
+  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::concatenateFields (*projected_cloud, *normals, *cloud_with_normals);
+
+    // Create search tree*
+  pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
+  tree2->setInputCloud (cloud_with_normals);
+
+  // Initialize objects
+  pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+
+  // Set the maximum distance between connected points (maximum edge length)
+  gp3.setSearchRadius (1.5);
+
+  // Set typical values for the parameters
+  gp3.setMu (2.5);
+  gp3.setMaximumNearestNeighbors (100);
+  gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
+  gp3.setMinimumAngle(M_PI/18); // 10 degrees
+  gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
+  gp3.setNormalConsistency(false);
+
+  // Get result
+  gp3.setInputCloud (cloud_with_normals);
+  gp3.setSearchMethod (tree2);
+  gp3.reconstruct (mesh_);
+
+
+
+
 
   // Additional vertex information
   // To which part (cloud) does each vertex belong
@@ -708,7 +965,7 @@ int FEM::CheckNodeOrderConsistency() {
 
 
 
-bool FEM::Compute(bool moving_least_squares, bool simulation) {
+bool FEM::Compute(bool moving_least_squares, bool triangulate_planar, bool simulation) {
 
   std::cout << " - Compute " << element_ << " FEM model" << std::endl;
 
@@ -722,14 +979,18 @@ bool FEM::Compute(bool moving_least_squares, bool simulation) {
   }
 
   if (ok && moving_least_squares) {
-    std::cout << " - MovingLeastSquares:" << std::endl;
+    std::cout << " - Moving Least Squares:" << std::endl;
     ok = MovingLeastSquares(simulation);
     std::cout << "   Result: " << ok << std::endl;
   }
 
   if (ok) {
     std::cout << " - Triangulation: " << ok << std::endl;
-    ok = Triangulate(simulation);
+    if (triangulate_planar) {
+      ok = TriangulateByProjection(simulation);
+    } else {
+      ok = Triangulate(simulation);
+    }
     std::cout << "   Result: " << ok << std::endl;
   }
 

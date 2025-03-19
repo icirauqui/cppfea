@@ -55,6 +55,7 @@ public:
   bool MovingLeastSquares(bool simulation = false);
   
   bool Triangulate(bool simulation = false);
+  bool TriangulateByProjection(bool simulation = false);
 
   void SimulateFailedTriangulation();
 
@@ -68,7 +69,7 @@ public:
   
   int CheckNodeOrderConsistency();
 
-  bool Compute(bool moving_least_squares = true, bool simulation = false);
+  bool Compute(bool moving_least_squares = true, bool triangulate_planar = false, bool simulation = false);
 
   bool ComputeExtrusion();
   std::vector<Eigen::Vector3d> GetExtrusionDelta();

@@ -196,14 +196,22 @@ double FEA::ComputeStrainEnergy(std::vector<Eigen::Vector3d> &u0,
 
   Eigen::MatrixXd U = Eigen::MatrixXd::Zero(dim_in, 1);
   for (unsigned int i = 0; i < u0.size()/2; i++) {
-    U(i*3, 0) = u1[i][0] - u0[i][0];
-    U(i*3+1, 0) = u1[i][1] - u0[i][1];
-    U(i*3+2, 0) = u1[i][2] - u0[i][2];
+    U(i*3+0, 0) =  u1[i][0] - u0[i][0];
+    U(i*3+1, 0) =  u1[i][1] - u0[i][1];
+    U(i*3+2, 0) =  u1[i][2] - u0[i][2];
   }
 
-  //std::cout << "U" << std::endl << U << std::endl;
-
   Eigen::MatrixXd Fi = K_ * U;
+
+  //std::ofstream file;
+  //file.open("../data/meshmeld01/F.txt");
+  //file << Fi << std::endl;
+  //file << std::endl << "F ( " << Fi.rows() << ", " << Fi.cols() << " ) " << std::endl;
+  //file.close();
+  //file.open("../data/meshmeld01/U.txt");
+  //file << U << std::endl;
+  //file << std::endl << "U ( " << U.rows() << ", " << U.cols() << " ) " << std::endl;
+  //file.close();
 
   double sE = 0.5 * (U.transpose() * Fi)(0,0);
 
